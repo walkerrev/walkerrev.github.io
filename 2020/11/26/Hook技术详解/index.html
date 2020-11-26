@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+    <meta name="author" content="Dang Yanlin">
+
+
+    <meta name="subtitle" content="linlin">
+
+
+    <meta name="description" content="逆向 re 网络安全 二进制">
+
+
+
+<title>Hook技术详解 | WalkerRev&#39;s blog</title>
+
+
+
+    <link rel="icon" href="/favicon.ico">
+
+
+
+
+    <!-- stylesheets list from _config.yml -->
+    
+    <link rel="stylesheet" href="/css/style.css">
+    
+
+
+
+    <!-- scripts list from _config.yml -->
+    
+    <script src="/js/script.js"></script>
+    
+    <script src="/js/tocbot.min.js"></script>
+    
+
+
+
+    
+    
+        
+    
+
+
+<meta name="generator" content="Hexo 4.2.0"></head>
+<body>
+    <div class="wrapper">
+        <header>
+    <nav class="navbar">
+        <div class="container">
+            <div class="navbar-header header-logo"><a href="/">Linlin&#39;s Blog</a></div>
+            <div class="menu navbar-right">
+                
+                    <a class="menu-item" href="/archives">博客</a>
+                
+                    <a class="menu-item" href="/category">目录</a>
+                
+                    <a class="menu-item" href="/tag">标签</a>
+                
+                    <a class="menu-item" href="https://me.csdn.net/qq_42689353" target="_blank" rel="noopener">CSDN</a>
+                
+                <input id="switch_default" type="checkbox" class="switch_default">
+                <label for="switch_default" class="toggleBtn"></label>
+            </div>
+        </div>
+    </nav>
+
+    
+    <nav class="navbar-mobile" id="nav-mobile">
+        <div class="container">
+            <div class="navbar-header">
+                <div>
+                    <a href="/">Linlin&#39;s Blog</a><a id="mobile-toggle-theme">·&nbsp;Light</a>
+                </div>
+                <div class="menu-toggle" onclick="mobileBtn()">&#9776; Menu</div>
+            </div>
+            <div class="menu" id="mobile-menu">
+                
+                    <a class="menu-item" href="/archives">博客</a>
+                
+                    <a class="menu-item" href="/category">目录</a>
+                
+                    <a class="menu-item" href="/tag">标签</a>
+                
+                    <a class="menu-item" href="https://me.csdn.net/qq_42689353" target="_blank" rel="noopener">CSDN</a>
+                
+            </div>
+        </div>
+    </nav>
+
+</header>
+<script>
+    var mobileBtn = function f() {
+        var toggleMenu = document.getElementsByClassName("menu-toggle")[0];
+        var mobileMenu = document.getElementById("mobile-menu");
+        if(toggleMenu.classList.contains("active")){
+           toggleMenu.classList.remove("active")
+            mobileMenu.classList.remove("active")
+        }else{
+            toggleMenu.classList.add("active")
+            mobileMenu.classList.add("active")
+        }
+    }
+</script>
+        <div class="main">
+            <div class="container">
+    
+    
+        <div class="post-toc">
+    <div class="tocbot-list">
+    </div>
+    <div class="tocbot-list-menu">
+        <a class="tocbot-toc-expand" onclick="expand_toc()">Expand all</a>
+        <a onclick="go_top()">Back to top</a>
+        <a onclick="go_bottom()">Go to bottom</a>
+    </div>
+</div>
+
+<script>
+    document.ready(
+        function () {
+            tocbot.init({
+                tocSelector: '.tocbot-list',
+                contentSelector: '.post-content',
+                headingSelector: 'h1, h2, h3, h4, h5',
+                collapseDepth: 1,
+                orderedList: false,
+                scrollSmooth: true,
+            })
+        }
+    )
+
+    function expand_toc() {
+        var b = document.querySelector(".tocbot-toc-expand");
+        tocbot.init({
+            tocSelector: '.tocbot-list',
+            contentSelector: '.post-content',
+            headingSelector: 'h1, h2, h3, h4, h5',
+            collapseDepth: 6,
+            orderedList: false,
+            scrollSmooth: true,
+        });
+        b.setAttribute("onclick", "collapse_toc()");
+        b.innerHTML = "Collapse all"
+    }
+
+    function collapse_toc() {
+        var b = document.querySelector(".tocbot-toc-expand");
+        tocbot.init({
+            tocSelector: '.tocbot-list',
+            contentSelector: '.post-content',
+            headingSelector: 'h1, h2, h3, h4, h5',
+            collapseDepth: 1,
+            orderedList: false,
+            scrollSmooth: true,
+        });
+        b.setAttribute("onclick", "expand_toc()");
+        b.innerHTML = "Expand all"
+    }
+
+    function go_top() {
+        window.scrollTo(0, 0);
+    }
+
+    function go_bottom() {
+        window.scrollTo(0, document.body.scrollHeight);
+    }
+
+</script>
+    
+
+    
+    <article class="post-wrap">
+        <header class="post-header">
+            <h1 class="post-title">Hook技术详解</h1>
+            
+                <div class="post-meta">
+                    
+                        Author: <a itemprop="author" rel="author" href="/">Dang Yanlin</a>
+                    
+
+                    
+                        <span class="post-time">
+                        Date: <a href="#">November 26, 2020&nbsp;&nbsp;20:52:29</a>
+                        </span>
+                    
+                    
+	<div style="margin-top:10px;">
+    <span class="post-time">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-keyboard-o"></i>
+        <span class="post-meta-item-text">  字数统计: </span>
+        <span class="post-count">1,816字</span>
+      </span>
+    </span>
+
+    <span class="post-time">
+      &nbsp; | &nbsp;
+      <span class="post-meta-item-icon">
+        <i class="fa fa-hourglass-half"></i>
+        <span class="post-meta-item-text">  阅读时长: </span>
+        <span class="post-count">7分</span>
+      </span>
+    </span>
+</div>
+           
+                </div>
+            
+        </header>
+
+        <div class="post-content">
+            <h1 id="Hook概述"><a href="#Hook概述" class="headerlink" title="Hook概述"></a>Hook概述</h1><p>“Hook”，中文译为“<strong>挂钩</strong>或<strong>钩子</strong>”，在计算机中，当程序执行的时候，指令流也像水流一样，只要在适当的时候“下网”，就可以对程序的运行流程进行监控。</p>
+<p>“<strong>Hook</strong>”的关键是通过一定的手段埋下“钩子”，“钩”住我们关心的重要流程，然后根据需要对执行过程进行干预。</p>
+<p><strong>采用Hook方式，导致了程序执行流程的改变，通过在执行真正的目标函数之前执行事先插入的代码，获得了程序执行过程的决定权——“插入特定代码以干预程序的执行流程”就是Hook的奥义。</strong></p>
+<h1 id="Hook分类"><a href="#Hook分类" class="headerlink" title="Hook分类"></a>Hook分类</h1><p>Address Hook    修改数据（函数地址）进行Hook</p>
+<p>Inline Hook    直接修改函数内的指令进行Hook</p>
+<h2 id="Address-Hook"><a href="#Address-Hook" class="headerlink" title="Address Hook"></a>Address Hook</h2><p>Address Hook是指通过修改数据进行Hook的方法。这里的数据通常指的是“<strong>函数的地址（偏移量）</strong>”。</p>
+<p>这些数据通常放在各类表或结构中，或者某个指定的地址处，亦或特殊的寄存器中。他们的<strong>共同点</strong>是<strong>某个时刻总会成为程序执行过程中的EIP</strong>。我们只需要把这些函数的地址修改为我们自己写的函数的地址，这样们就可以轻松的拿到程序的控制权了。</p>
+<h2 id="Inline-Hook"><a href="#Inline-Hook" class="headerlink" title="Inline Hook"></a>Inline Hook</h2><p>Inline Hook是指直接修改指令的Hook，其关键是转移程序的执行流程，一般使用各种转移指令。</p>
+<h2 id="基于异常处理的Hook"><a href="#基于异常处理的Hook" class="headerlink" title="基于异常处理的Hook"></a>基于异常处理的Hook</h2><p>在程序执行过程中如果发生异常的时候，系统异常处理过程nt!KiDispatchException便会开始工作，在没有内核调试器存在且异常程序没有被调试的情况下，系统会把异常处理过程转交给用户态的异常处理过程，以查找系统中是否安装了异常处理程序。如果已经安装，就会调用异常处理过程对其进行处理。</p>
+<p>如果在程序中自行安装SEH（或VEH）处理过程，然后向被Hook的位置写入一条会引发异常的指令（例如 INT3），或者通过改变被Hook位置的内存属性引发内存访问异常，程序执行到这里之后，就会触发异常，跳转到事先安装的异常处理过程</p>
+<p><img src="image-20201126194937057.png" alt=""></p>
+<h2 id="其他的Hook"><a href="#其他的Hook" class="headerlink" title="其他的Hook"></a>其他的Hook</h2><h3 id="病毒？"><a href="#病毒？" class="headerlink" title="病毒？"></a>病毒？</h3><p>一个“优秀“的病毒，会在执行完病毒代码后跳回原始入口，执行程序的正常功能，使用户不易察觉到程序已经被感染。</p>
+<p>一个优秀的Hook程序，达到自己的目的之后，不会对原来的程序的调用产生影响。</p>
+<h3 id="系统回调机制和分层模型（正规军）"><a href="#系统回调机制和分层模型（正规军）" class="headerlink" title="系统回调机制和分层模型（正规军）"></a>系统回调机制和分层模型（正规军）</h3><ul>
+<li>各类回调机制</li>
+<li>分层服务和过滤驱动模型</li>
+</ul>
+<h1 id="Address-Hook-1"><a href="#Address-Hook-1" class="headerlink" title="Address Hook"></a>Address Hook</h1><h2 id="各类表中的地址"><a href="#各类表中的地址" class="headerlink" title="各类表中的地址"></a>各类表中的地址</h2><h3 id="PE的IAT"><a href="#PE的IAT" class="headerlink" title="PE的IAT"></a>PE的IAT</h3><p>IAT(Import Address Table,输入表)，IAT具体指的是某个PE模块的IAT，我们可以通过修改IAT中的函数的地址来让它指向我们自己写的函数</p>
+<p>这个Hook的关键在于如何修改IAT中的函数的地址。</p>
+<p>看下面这段代码：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//************************************</span></span><br><span class="line"><span class="comment">// FullName:    InstallModuleIATHook</span></span><br><span class="line"><span class="comment">// Description: 为指定模块安装IAT Hook</span></span><br><span class="line"><span class="comment">// Access:      public </span></span><br><span class="line"><span class="comment">// Returns:     BOOL</span></span><br><span class="line"><span class="comment">// Parameter:   HMODULE hModToHook , 待Hook的模块基址</span></span><br><span class="line"><span class="comment">// Parameter:   char * szModuleName , 目标函数所在模块的名字</span></span><br><span class="line"><span class="comment">// Parameter:   char * szFuncName , 目标函数的名字</span></span><br><span class="line"><span class="comment">// Parameter:   PVOID DetourFunc , Detour函数地址</span></span><br><span class="line"><span class="comment">// Parameter:   PULONG * pThunkPointer , 用以接收指向修改的位置的指针</span></span><br><span class="line"><span class="comment">// Parameter:   ULONG * pOriginalFuncAddr , 用以接收原始函数地址</span></span><br><span class="line"><span class="comment">//************************************</span></span><br><span class="line"></span><br><span class="line"><span class="function">BOOL <span class="title">InstallModuleIATHook</span><span class="params">(</span></span></span><br><span class="line"><span class="function"><span class="params">	HMODULE hModToHook, <span class="comment">// IN  待Hook的模块基址</span></span></span></span><br><span class="line"><span class="function"><span class="params">	<span class="keyword">char</span> *szModuleName,<span class="comment">// IN   目标函数所在模块的名字</span></span></span></span><br><span class="line"><span class="function"><span class="params">	<span class="keyword">char</span> *szFuncName,<span class="comment">// IN	   目标函数的名字</span></span></span></span><br><span class="line"><span class="function"><span class="params">	PVOID DetourFunc,<span class="comment">// IN     自己写的函数的地址</span></span></span></span><br><span class="line"><span class="function"><span class="params">	PULONG_PTR *pThunkPointer,<span class="comment">//OUT     接收指向修改位置的指针  </span></span></span></span><br><span class="line"><span class="function"><span class="params">	ULONG_PTR *pOriginalFuncAddr<span class="comment">//OUT   接收原始函数的地址</span></span></span></span><br><span class="line"><span class="function"><span class="params">	)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	PIMAGE_IMPORT_DESCRIPTOR  pImportDescriptor;</span><br><span class="line">	PIMAGE_THUNK_DATA         pThunkData;</span><br><span class="line">	ULONG ulSize;</span><br><span class="line">	HMODULE hModule=<span class="number">0</span>;</span><br><span class="line">	ULONG_PTR TargetFunAddr;</span><br><span class="line">	PULONG_PTR lpAddr;</span><br><span class="line">	<span class="keyword">char</span> *szModName;</span><br><span class="line">	BOOL result = FALSE ;</span><br><span class="line">	BOOL bRetn = FALSE;</span><br><span class="line"></span><br><span class="line">	hModule = LoadLibrary(szModuleName);  <span class="comment">//  加载目标函数所在的模块</span></span><br><span class="line">	TargetFunAddr = (ULONG_PTR)GetProcAddress(hModule,szFuncName); <span class="comment">// 获取目标函数所在的地址</span></span><br><span class="line">	<span class="built_in">printf</span>(<span class="string">"[*]Address of %s:0x%p\n"</span>,szFuncName,TargetFunAddr);</span><br><span class="line">	<span class="built_in">printf</span>(<span class="string">"[*]Module To Hook at Base:0x%p\n"</span>,hModToHook);<span class="comment">// 模块基址</span></span><br><span class="line">	pImportDescriptor = (PIMAGE_IMPORT_DESCRIPTOR)ImageDirectoryEntryToData</span><br><span class="line">        (hModToHook, TRUE,IMAGE_DIRECTORY_ENTRY_IMPORT, &amp;ulSize);<span class="comment">//  获得输入表（IAT）</span></span><br><span class="line">	<span class="built_in">printf</span>(<span class="string">"[*]Find ImportTable,Address:0x%p\n"</span>,pImportDescriptor);</span><br><span class="line">	<span class="keyword">while</span> (pImportDescriptor-&gt;FirstThunk)</span><br><span class="line">	&#123;</span><br><span class="line">		szModName = (<span class="keyword">char</span>*)((PBYTE)hModToHook+pImportDescriptor-&gt;Name) ;<span class="comment">//输入表中的模块名称</span></span><br><span class="line">		<span class="built_in">printf</span>(<span class="string">"[*]Cur Module Name:%s\n"</span>,szModName);</span><br><span class="line">		<span class="keyword">if</span> (stricmp(szModName,szModuleName) != <span class="number">0</span>)<span class="comment">//  没有找到的话</span></span><br><span class="line">		&#123;</span><br><span class="line">			<span class="built_in">printf</span>(<span class="string">"[*]Module Name does not match, search next...\n"</span>);</span><br><span class="line">			pImportDescriptor++;</span><br><span class="line">			<span class="keyword">continue</span>;</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="comment">//程序的导入表处理完毕后OriginalFirstThunk可能是无效的，不能再根据名称来查找，而是遍历FirstThunk直接根据地址判断</span></span><br><span class="line">		pThunkData = (PIMAGE_THUNK_DATA)((BYTE *)hModToHook + pImportDescriptor-&gt;FirstThunk);</span><br><span class="line">		<span class="keyword">while</span>(pThunkData-&gt;u1.Function)</span><br><span class="line">		&#123;</span><br><span class="line">			lpAddr = (ULONG_PTR*)pThunkData;</span><br><span class="line">			<span class="comment">//找到了地址</span></span><br><span class="line">			<span class="keyword">if</span>((*lpAddr) == TargetFunAddr)</span><br><span class="line">			&#123;</span><br><span class="line">				<span class="built_in">printf</span>(<span class="string">"[*]Find target address!\n"</span>);</span><br><span class="line">				<span class="comment">//通常情况下导入表所在内存页都是只读的，因此需要先修改内存页的属性为可写</span></span><br><span class="line">				DWORD dwOldProtect;</span><br><span class="line">				MEMORY_BASIC_INFORMATION  mbi;</span><br><span class="line">				VirtualQuery(lpAddr,&amp;mbi,<span class="keyword">sizeof</span>(mbi));</span><br><span class="line">				bRetn = VirtualProtect(mbi.BaseAddress,mbi.RegionSize,PAGE_EXECUTE_READWRITE,&amp;dwOldProtect);<span class="comment">//  修改页属性</span></span><br><span class="line">				<span class="keyword">if</span> (bRetn)</span><br><span class="line">				&#123;</span><br><span class="line">					<span class="comment">//内存页属性修改成功,继续下一步操作,先保存原始数据</span></span><br><span class="line">					<span class="keyword">if</span> (pThunkPointer != <span class="literal">NULL</span>) <span class="comment">//  保存原始数据</span></span><br><span class="line">					&#123;</span><br><span class="line">						*pThunkPointer = lpAddr ;</span><br><span class="line">					&#125;</span><br><span class="line">					<span class="keyword">if</span> (pOriginalFuncAddr != <span class="literal">NULL</span>)</span><br><span class="line">					&#123;</span><br><span class="line">						*pOriginalFuncAddr = *lpAddr ;</span><br><span class="line">					&#125;</span><br><span class="line">					<span class="comment">//修改地址</span></span><br><span class="line">					*lpAddr = (ULONG_PTR)DetourFunc;  <span class="comment">//  修改</span></span><br><span class="line">					result = TRUE ;</span><br><span class="line">					<span class="comment">//恢复内存页的属性</span></span><br><span class="line">					VirtualProtect(mbi.BaseAddress,mbi.RegionSize,dwOldProtect,<span class="number">0</span>);</span><br><span class="line">					<span class="built_in">printf</span>(<span class="string">"[*]Hook ok.\n"</span>);</span><br><span class="line">				&#125;</span><br><span class="line">				</span><br><span class="line">				<span class="keyword">break</span>;	</span><br><span class="line">			&#125;</span><br><span class="line">			<span class="comment">//---------</span></span><br><span class="line">			pThunkData++;</span><br><span class="line">		&#125;</span><br><span class="line">		pImportDescriptor++;</span><br><span class="line">	&#125;</span><br><span class="line">	</span><br><span class="line">	FreeLibrary(hModule);  <span class="comment">//  卸载函数目标模块</span></span><br><span class="line">	<span class="keyword">return</span> result;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="PE中的EAT"><a href="#PE中的EAT" class="headerlink" title="PE中的EAT"></a>PE中的EAT</h3><p>EAT(Emport Address Table，输出表)与IAT不同，EAT中存放的不是函数地址，而是函数地址的偏移使用时需要加上模块基址。所以，在进行Hook时，要用自己写的函数的地址减去被Hook模块的基址。</p>
+<h3 id="user32-dll的回调函数表"><a href="#user32-dll的回调函数表" class="headerlink" title="user32.dll的回调函数表"></a>user32.dll的回调函数表</h3><p>在user32.dll中有一个名为USER32!apfnDispatch的回调函数表，其中存放了各种GUI的回调函数，通常与内核中的KeUserModeCallback函数配合使用。</p>
+<h3 id="IDT"><a href="#IDT" class="headerlink" title="IDT"></a>IDT</h3><p>IDT(中断描述符表)是操作系统在处理中断基机制时使用的一张表。当中断发生时，操作系统需要知道应该把中断交给谁去处理，因此需要用一张表来存储这些信息以便操作系统来使用。</p>
+<h3 id="SSDT和Shadow-SSDT"><a href="#SSDT和Shadow-SSDT" class="headerlink" title="SSDT和Shadow SSDT"></a>SSDT和Shadow SSDT</h3><p>SSDT 系统服务描述符表</p>
+<h3 id="C-类的虚函数表"><a href="#C-类的虚函数表" class="headerlink" title="C++类的虚函数表"></a>C++类的虚函数表</h3><p>虚函数和重载是C++非常重要的特性，它可以使子类以相同的接口实现与基类不同的功能，编译器使用了一个地址表来保存虚函数的地址，称为虚函数表。</p>
+<h3 id="COM接口的功能函数表"><a href="#COM接口的功能函数表" class="headerlink" title="COM接口的功能函数表"></a>COM接口的功能函数表</h3><h2 id="处理例程地址"><a href="#处理例程地址" class="headerlink" title="处理例程地址"></a>处理例程地址</h2><h2 id="特殊寄存器中的地址"><a href="#特殊寄存器中的地址" class="headerlink" title="特殊寄存器中的地址"></a>特殊寄存器中的地址</h2><h2 id="特定的函数指针"><a href="#特定的函数指针" class="headerlink" title="特定的函数指针"></a>特定的函数指针</h2><h1 id="Inline-Hook-1"><a href="#Inline-Hook-1" class="headerlink" title="Inline Hook"></a>Inline Hook</h1><p>Inline Hook是指直接修改指令的Hook，其关键是转移程序的执行流程，一般使用jmp,call,retn之类的转移指令。</p>
+<p>一般主要有以下⑤种方式：</p>
+<ol>
+<li><p><strong>jmp xxxxxxxx</strong>（5字节）</p>
+<p>直接跳转到某地址</p>
+</li>
+<li><p><strong>push xxxxxxxx/retn</strong>（6字节）</p>
+<p>通过压栈返回实现跳转</p>
+</li>
+<li><p><strong>mov eax,xxxxxxxx/jmp eax</strong>（7字节）</p>
+</li>
+<li><p><strong>call Hook</strong></p>
+</li>
+<li><p><strong>HotPatch Hook</strong></p>
+</li>
+</ol>
+
+        </div>
+
+        
+            <section class="post-copyright">
+                
+                    <p class="copyright-item">
+                        <span>Author:</span>
+                        <span>Dang Yanlin</span>
+                    </p>
+                
+                
+                
+                
+
+            </section>
+        
+	
+    <section id="comments" class="comments">
+      <style>
+        .comments{margin:30px;padding:10px;background:#fff}
+        @media screen and (max-width:800px){.comments{margin:auto;padding:10px;background:#fff}}
+      </style>
+      <div class="valine_comment"></div>
+<!--载入js，在</body>之前插入即可-->
+<!--Leancloud 操作库:-->
+<script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+<!--Valine 的核心代码库-->
+<script src="//unpkg.com/valine/dist/Valine.min.js"></script>
+<script>
+  new Valine({
+      el: '.valine_comment',
+      app_id: 'fdPvG8U2K2eUc1GnjTey5gwg-gzGzoHsz',
+      app_key: 'pSEhojKlFNh8eGAU3WfuDsDC',
+      placeholder: '这里留言。。',
+      notify: 'true',
+      verify: 'true',
+    });
+</script>
+    </section>
+
+        <section class="post-tags">
+            <div>
+                <span>Tag(s):</span>
+                <span class="tag">
+                    
+                </span>
+            </div>
+            <div>
+                <a href="javascript:window.history.back();">back</a>
+                <span>· </span>
+                <a href="/">home</a>
+            </div>
+        </section>
+        <section class="post-nav">
+            
+                <a class="prev" rel="prev" href="/2020/11/26/Hook%E6%8A%80%E6%9C%AF%E5%AE%9E%E6%88%98/">Hook技术实战</a>
+            
+            
+            <a class="next" rel="next" href="/2020/05/07/Windows%E7%A8%8B%E5%BA%8F%E5%86%85%E9%83%A8%E6%93%8D%E4%BD%9C%E5%8E%9F%E7%90%86%E4%B9%8B%E6%B6%88%E6%81%AF%EF%BC%88%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97%EF%BC%89/">Windows程序内部操作原理之消息（消息队列）</a>
+            
+        </section>
+
+    </article>
+</div>
+
+        </div>
+        <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js">
+</script>
+<footer id="footer" class="footer">
+    <div class="copyright">
+        <span>© 2020 | Powered by Dang Yanlin </span>
+已经建站 <b id='build_time'></b>
+		<span id="busuanzi_container_site_pv" style="display: none;">本站总访问量<span id="busuanzi_value_site_pv"></span>次</span>  <span id="busuanzi_container_site_uv" style="display: none;">本站访客数<span id="busuanzi_value_site_uv"</span>人</span>
+    </div>
+</footer>
+<script src="https://cdn.jsdelivr.net/gh/ITJoker233/ITJoker233.github.io/CDN/js/time.min.js"></script>
+        <script>setInterval(show_date_time, 1000, '2020-04-10');</script>
+<script>setInterval(show_date_time, 1000, '2020-04-10');</script>
+    </div>
+</body>
+</html>
