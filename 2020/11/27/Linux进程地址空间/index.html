@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+    <meta name="author" content="Dang Yanlin">
+
+
+    <meta name="subtitle" content="linlin">
+
+
+    <meta name="description" content="逆向 re 网络安全 二进制">
+
+
+
+<title>Linux下ELF文件与Linux进程内存布局 | WalkerRev&#39;s blog</title>
+
+
+
+    <link rel="icon" href="/favicon.ico">
+
+
+
+
+    <!-- stylesheets list from _config.yml -->
+    
+    <link rel="stylesheet" href="/css/style.css">
+    
+
+
+
+    <!-- scripts list from _config.yml -->
+    
+    <script src="/js/script.js"></script>
+    
+    <script src="/js/tocbot.min.js"></script>
+    
+
+
+
+    
+    
+        
+    
+
+
+<meta name="generator" content="Hexo 4.2.0"></head>
+<body>
+    <div class="wrapper">
+        <header>
+    <nav class="navbar">
+        <div class="container">
+            <div class="navbar-header header-logo"><a href="/">Linlin&#39;s Blog</a></div>
+            <div class="menu navbar-right">
+                
+                    <a class="menu-item" href="/archives">博客</a>
+                
+                    <a class="menu-item" href="/category">目录</a>
+                
+                    <a class="menu-item" href="/tag">标签</a>
+                
+                    <a class="menu-item" href="https://me.csdn.net/qq_42689353" target="_blank" rel="noopener">CSDN</a>
+                
+                <input id="switch_default" type="checkbox" class="switch_default">
+                <label for="switch_default" class="toggleBtn"></label>
+            </div>
+        </div>
+    </nav>
+
+    
+    <nav class="navbar-mobile" id="nav-mobile">
+        <div class="container">
+            <div class="navbar-header">
+                <div>
+                    <a href="/">Linlin&#39;s Blog</a><a id="mobile-toggle-theme">·&nbsp;Light</a>
+                </div>
+                <div class="menu-toggle" onclick="mobileBtn()">&#9776; Menu</div>
+            </div>
+            <div class="menu" id="mobile-menu">
+                
+                    <a class="menu-item" href="/archives">博客</a>
+                
+                    <a class="menu-item" href="/category">目录</a>
+                
+                    <a class="menu-item" href="/tag">标签</a>
+                
+                    <a class="menu-item" href="https://me.csdn.net/qq_42689353" target="_blank" rel="noopener">CSDN</a>
+                
+            </div>
+        </div>
+    </nav>
+
+</header>
+<script>
+    var mobileBtn = function f() {
+        var toggleMenu = document.getElementsByClassName("menu-toggle")[0];
+        var mobileMenu = document.getElementById("mobile-menu");
+        if(toggleMenu.classList.contains("active")){
+           toggleMenu.classList.remove("active")
+            mobileMenu.classList.remove("active")
+        }else{
+            toggleMenu.classList.add("active")
+            mobileMenu.classList.add("active")
+        }
+    }
+</script>
+        <div class="main">
+            <div class="container">
+    
+    
+        <div class="post-toc">
+    <div class="tocbot-list">
+    </div>
+    <div class="tocbot-list-menu">
+        <a class="tocbot-toc-expand" onclick="expand_toc()">Expand all</a>
+        <a onclick="go_top()">Back to top</a>
+        <a onclick="go_bottom()">Go to bottom</a>
+    </div>
+</div>
+
+<script>
+    document.ready(
+        function () {
+            tocbot.init({
+                tocSelector: '.tocbot-list',
+                contentSelector: '.post-content',
+                headingSelector: 'h1, h2, h3, h4, h5',
+                collapseDepth: 1,
+                orderedList: false,
+                scrollSmooth: true,
+            })
+        }
+    )
+
+    function expand_toc() {
+        var b = document.querySelector(".tocbot-toc-expand");
+        tocbot.init({
+            tocSelector: '.tocbot-list',
+            contentSelector: '.post-content',
+            headingSelector: 'h1, h2, h3, h4, h5',
+            collapseDepth: 6,
+            orderedList: false,
+            scrollSmooth: true,
+        });
+        b.setAttribute("onclick", "collapse_toc()");
+        b.innerHTML = "Collapse all"
+    }
+
+    function collapse_toc() {
+        var b = document.querySelector(".tocbot-toc-expand");
+        tocbot.init({
+            tocSelector: '.tocbot-list',
+            contentSelector: '.post-content',
+            headingSelector: 'h1, h2, h3, h4, h5',
+            collapseDepth: 1,
+            orderedList: false,
+            scrollSmooth: true,
+        });
+        b.setAttribute("onclick", "expand_toc()");
+        b.innerHTML = "Expand all"
+    }
+
+    function go_top() {
+        window.scrollTo(0, 0);
+    }
+
+    function go_bottom() {
+        window.scrollTo(0, document.body.scrollHeight);
+    }
+
+</script>
+    
+
+    
+    <article class="post-wrap">
+        <header class="post-header">
+            <h1 class="post-title">Linux下ELF文件与Linux进程内存布局</h1>
+            
+                <div class="post-meta">
+                    
+                        Author: <a itemprop="author" rel="author" href="/">Dang Yanlin</a>
+                    
+
+                    
+                        <span class="post-time">
+                        Date: <a href="#">November 27, 2020&nbsp;&nbsp;21:08:20</a>
+                        </span>
+                    
+                    
+                        <span class="post-category">
+                        Category:
+                            
+                                <a href="/%E5%88%86%E7%B1%BB/Linux/">Linux</a>
+                            
+                        </span>
+                    
+	<div style="margin-top:10px;">
+    <span class="post-time">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-keyboard-o"></i>
+        <span class="post-meta-item-text">  字数统计: </span>
+        <span class="post-count">2,912字</span>
+      </span>
+    </span>
+
+    <span class="post-time">
+      &nbsp; | &nbsp;
+      <span class="post-meta-item-icon">
+        <i class="fa fa-hourglass-half"></i>
+        <span class="post-meta-item-text">  阅读时长: </span>
+        <span class="post-count">15分</span>
+      </span>
+    </span>
+</div>
+           
+                </div>
+            
+        </header>
+
+        <div class="post-content">
+            <h1 id="ELF文件"><a href="#ELF文件" class="headerlink" title="ELF文件"></a>ELF文件</h1><h2 id="可重定位文件"><a href="#可重定位文件" class="headerlink" title="可重定位文件"></a>可重定位文件</h2><p>这类文件包含了代码和数据，可以被用来链接成可执行文件或共享目标文件，静态链接库也可以归为这一类。</p>
+<h2 id="可执行文件"><a href="#可执行文件" class="headerlink" title="可执行文件"></a>可执行文件</h2><p>这类文件包含了可以直接执行的程序。</p>
+<h2 id="共享目标文件"><a href="#共享目标文件" class="headerlink" title="共享目标文件"></a>共享目标文件</h2><p>这类文件包含了代码和数据，可在以下两种情况下使用：</p>
+<ul>
+<li><p>链接器可以使用这种文件跟其他的可重定位文件和共享目标文件链接，产生新的目标文件。</p>
+</li>
+<li><p>动态链接器可以将几个共享目标文件与可执行文件结合，作为进程映像的一部分来运行。</p>
+</li>
+</ul>
+<h2 id="核心转储文件"><a href="#核心转储文件" class="headerlink" title="核心转储文件"></a>核心转储文件</h2><h2 id="ELF文件格式"><a href="#ELF文件格式" class="headerlink" title="ELF文件格式"></a>ELF文件格式</h2><h3 id="文件头（ELF-header）"><a href="#文件头（ELF-header）" class="headerlink" title="文件头（ELF header）"></a>文件头（ELF header）</h3><p>我们首先看一下elf.h中的文件内容</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line">/usr/include/elf.h</span><br><span class="line"><span class="number">32</span>位</span><br><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span></span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line">  <span class="keyword">unsigned</span> <span class="keyword">char</span>	e_ident[EI_NIDENT];	<span class="comment">/* Magic number and other info */</span></span><br><span class="line">  Elf32_Half	e_type;			<span class="comment">/* Object file type */</span></span><br><span class="line">  Elf32_Half	e_machine;		<span class="comment">/* Architecture */</span></span><br><span class="line">  Elf32_Word	e_version;		<span class="comment">/* Object file version */</span></span><br><span class="line">  Elf32_Addr	e_entry;		<span class="comment">/* Entry point virtual address */</span></span><br><span class="line">  Elf32_Off	e_phoff;		<span class="comment">/* Program header table file offset */</span></span><br><span class="line">  Elf32_Off	e_shoff;		<span class="comment">/* Section header table file offset */</span></span><br><span class="line">  Elf32_Word	e_flags;		<span class="comment">/* Processor-specific flags */</span></span><br><span class="line">  Elf32_Half	e_ehsize;		<span class="comment">/* ELF header size in bytes */</span></span><br><span class="line">  Elf32_Half	e_phentsize;		<span class="comment">/* Program header table entry size */</span></span><br><span class="line">  Elf32_Half	e_phnum;		<span class="comment">/* Program header table entry count */</span></span><br><span class="line">  Elf32_Half	e_shentsize;		<span class="comment">/* Section header table entry size */</span></span><br><span class="line">  Elf32_Half	e_shnum;		<span class="comment">/* Section header table entry count */</span></span><br><span class="line">  Elf32_Half	e_shstrndx;		<span class="comment">/* Section header string table index */</span></span><br><span class="line">&#125; Elf32_Ehdr;</span><br><span class="line"></span><br><span class="line"><span class="number">64</span>位</span><br><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span></span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line">  <span class="keyword">unsigned</span> <span class="keyword">char</span>	e_ident[EI_NIDENT];	<span class="comment">/* Magic number and other info */</span></span><br><span class="line">  Elf64_Half	e_type;			<span class="comment">/* Object file type */</span></span><br><span class="line">  Elf64_Half	e_machine;		<span class="comment">/* Architecture */</span></span><br><span class="line">  Elf64_Word	e_version;		<span class="comment">/* Object file version */</span></span><br><span class="line">  Elf64_Addr	e_entry;		<span class="comment">/* Entry point virtual address */</span></span><br><span class="line">  Elf64_Off	e_phoff;		<span class="comment">/* Program header table file offset */</span></span><br><span class="line">  Elf64_Off	e_shoff;		<span class="comment">/* Section header table file offset */</span></span><br><span class="line">  Elf64_Word	e_flags;		<span class="comment">/* Processor-specific flags */</span></span><br><span class="line">  Elf64_Half	e_ehsize;		<span class="comment">/* ELF header size in bytes */</span></span><br><span class="line">  Elf64_Half	e_phentsize;		<span class="comment">/* Program header table entry size */</span></span><br><span class="line">  Elf64_Half	e_phnum;		<span class="comment">/* Program header table entry count */</span></span><br><span class="line">  Elf64_Half	e_shentsize;		<span class="comment">/* Section header table entry size */</span></span><br><span class="line">  Elf64_Half	e_shnum;		<span class="comment">/* Section header table entry count */</span></span><br><span class="line">  Elf64_Half	e_shstrndx;		<span class="comment">/* Section header string table index */</span></span><br><span class="line">&#125; Elf64_Ehdr;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>e_ident: 16个字节<ol>
+<li>前四个字节：所有ELF文件都必须相同的标识码</li>
+<li>第五个字节：标识ELF的文件类型</li>
+<li>第六个字节：字节序</li>
+<li>第七个字节：ELF文件主版本号</li>
+<li>后面的9个字节ELF标准没有定义</li>
+</ol>
+</li>
+<li>e_type: ELF文件类型</li>
+<li>e_machine：ELF文件的CPU平台属性</li>
+<li>e_version：ELF文件版本</li>
+<li>e_entry：ELF程序的入口虚拟地址</li>
+<li>e_phoff：</li>
+<li>e_shoff：段表在文件中的偏移</li>
+<li>e_flags：ELF标识位，用来标识一些ELF文件平台相关的属性</li>
+<li>e_ehsize：ELF文件头本身的大小</li>
+<li>e_phentsize：</li>
+<li>e_phnum：</li>
+<li>e_shentsize：段表描述符的大小</li>
+<li>e_shnum：段表描述符的数量，其值等于ELF文件中拥有的段的数量</li>
+<li>e_shstrndx：段表字符串表所在的段在段表中的下标。</li>
+</ul>
+<h3 id="段表（Section-header-table）"><a href="#段表（Section-header-table）" class="headerlink" title="段表（Section header table）"></a>段表（Section header table）</h3><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/* Section header.  */</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span></span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line">  Elf32_Word	sh_name;		<span class="comment">/* Section name (string tbl index) */</span></span><br><span class="line">  Elf32_Word	sh_type;		<span class="comment">/* Section type */</span></span><br><span class="line">  Elf32_Word	sh_flags;		<span class="comment">/* Section flags */</span></span><br><span class="line">  Elf32_Addr	sh_addr;		<span class="comment">/* Section virtual addr at execution */</span></span><br><span class="line">  Elf32_Off	sh_offset;		<span class="comment">/* Section file offset */</span></span><br><span class="line">  Elf32_Word	sh_size;		<span class="comment">/* Section size in bytes */</span></span><br><span class="line">  Elf32_Word	sh_link;		<span class="comment">/* Link to another section */</span></span><br><span class="line">  Elf32_Word	sh_info;		<span class="comment">/* Additional section information */</span></span><br><span class="line">  Elf32_Word	sh_addralign;		<span class="comment">/* Section alignment */</span></span><br><span class="line">  Elf32_Word	sh_entsize;		<span class="comment">/* Entry size if section holds table */</span></span><br><span class="line">&#125; Elf32_Shdr;</span><br><span class="line"></span><br><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span></span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line">  Elf64_Word	sh_name;		<span class="comment">/* Section name (string tbl index) */</span></span><br><span class="line">  Elf64_Word	sh_type;		<span class="comment">/* Section type */</span></span><br><span class="line">  Elf64_Xword	sh_flags;		<span class="comment">/* Section flags */</span></span><br><span class="line">  Elf64_Addr	sh_addr;		<span class="comment">/* Section virtual addr at execution */</span></span><br><span class="line">  Elf64_Off	sh_offset;		<span class="comment">/* Section file offset */</span></span><br><span class="line">  Elf64_Xword	sh_size;		<span class="comment">/* Section size in bytes */</span></span><br><span class="line">  Elf64_Word	sh_link;		<span class="comment">/* Link to another section */</span></span><br><span class="line">  Elf64_Word	sh_info;		<span class="comment">/* Additional section information */</span></span><br><span class="line">  Elf64_Xword	sh_addralign;		<span class="comment">/* Section alignment */</span></span><br><span class="line">  Elf64_Xword	sh_entsize;		<span class="comment">/* Entry size if section holds table */</span></span><br><span class="line">&#125; Elf64_Shdr;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>sh_name：段名</li>
+<li>sh_type：段的类型</li>
+<li>sh_flags：段的标志位</li>
+<li>sh_addr：段虚拟地址</li>
+<li>sh_offset：段在文件中的偏移</li>
+<li>sh_size：段的长度</li>
+<li>sh_link：段的链接信息</li>
+<li>sh_info：段的链接信息</li>
+<li>sh_addralign：段地址对齐</li>
+<li>sh_entsize：项的长度</li>
+</ul>
+<p><strong>注意：</strong>段的名字对于编译器、链接器是有意义的，但是对于操作系统来说，并没有什么实质的意义，对于操作系统来说，一个段该如何处理取决于它的属性和权限。</p>
+<p>段表的结构比较简单，它是一个以“Elf_Shdr”结构体为元素的数组，数组元素的个数等于段的个数，每个“Elf_Shdr”结构体对应一个段，“Elf_Shdr”又被称为段描述符。</p>
+<p><img src="image-20201128130737448.png" alt="image-20201128130737448"></p>
+<h2 id="Segment和Section"><a href="#Segment和Section" class="headerlink" title="Segment和Section?"></a>Segment和Section?</h2><p>一个“Segment”包含一个或多个属性类似的“Section”，对于相同权限的段，把它们合并在一起当作一个段进行映射。</p>
+<p>映射以后在进程的虚拟空间中只有一个相对应的虚拟内存区域。这样做的好处是可以明显的减少页面内部碎片，从而节省内存空间。</p>
+<p>“Segment”的概念实际上是从装载的角度重新划分了ELF的各个段，在将目标文件链接成可执行文件的时候，链接器会尽量把相同权限属性的段分配在同一空间。</p>
+<p>总的来说，“Segment”和“Section”是从不同的角度来划分同一个ELF文件，从“Section”的角度来看就是链接视图，从“Segment”的角度来看就是执行视图。</p>
+<h1 id="Linux进程内存布局"><a href="#Linux进程内存布局" class="headerlink" title="Linux进程内存布局"></a>Linux进程内存布局</h1><p><img src="Center" alt="img"></p>
+<p>看下面这段代码：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br></pre></td><td class="code"><pre><span class="line">test.c</span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;unistd.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">int</span> A;</span><br><span class="line"><span class="keyword">int</span> B=<span class="number">0</span>;</span><br><span class="line"><span class="keyword">int</span> C=<span class="number">2</span>;</span><br><span class="line"><span class="keyword">static</span> <span class="keyword">int</span> D;</span><br><span class="line"><span class="keyword">static</span> <span class="keyword">int</span> E=<span class="number">0</span>;</span><br><span class="line"><span class="keyword">static</span> <span class="keyword">int</span> F=<span class="number">4</span>;</span><br><span class="line"><span class="keyword">const</span>  <span class="keyword">int</span> G=<span class="number">5</span>;</span><br><span class="line"><span class="keyword">const</span>  <span class="keyword">char</span> H=<span class="number">6</span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">int</span> a;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">int</span> b=<span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">int</span> c=<span class="number">2</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">static</span> <span class="keyword">int</span> d;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">static</span> <span class="keyword">int</span> e=<span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">static</span> <span class="keyword">int</span> f=<span class="number">4</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">const</span>  <span class="keyword">int</span> g=<span class="number">5</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">char</span> char1[]=<span class="string">"abcde"</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">char</span> *cptr = <span class="string">"123456"</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">int</span> *heap =<span class="built_in">malloc</span>(<span class="keyword">sizeof</span>(<span class="keyword">int</span>)*<span class="number">4</span>);</span><br><span class="line"></span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"PID is :%d\n"</span>,getpid());</span><br><span class="line"></span><br><span class="line">  	<span class="built_in">printf</span>(<span class="string">"int A                           A_addr=%p\n"</span>,&amp;A);</span><br><span class="line">	<span class="built_in">printf</span>(<span class="string">"int B=0                         B_addr=%p\n"</span>,&amp;B);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"int C=2                         C_addr=%p\n"</span>,&amp;C);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"static int D            D_addr=%p\n"</span>,&amp;D);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"static int E=0          E_addr=%p\n"</span>,&amp;E);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"static int F=4          F_addr=%p\n"</span>,&amp;F);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"static int G=5          G_addr=%p\n"</span>,&amp;G);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"const int H=6           H_addr=%p\n"</span>,&amp;H);</span><br><span class="line"></span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"\n"</span>);</span><br><span class="line"></span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"int a                           a_addr=%p\n"</span>,&amp;a);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"int b=0                         B_addr=%p\n"</span>,&amp;b);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"int c=2                         c_addr=%p\n"</span>,&amp;c);</span><br><span class="line"></span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"\n"</span>);</span><br><span class="line">	</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"static int d            d_addr=%p\n"</span>,&amp;d);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"static int e=0          e_addr=%p\n"</span>,&amp;e);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"static int f=4          f_addr=%p\n"</span>,&amp;f);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"const int g=5           g_addr=%p\n"</span>,&amp;g);</span><br><span class="line"></span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"\n"</span>);</span><br><span class="line"></span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"char char1[]='abcde'\t\t\t char1_addr=%p\n"</span>,char1);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"char char1[]='abcde'\t\t\t &amp;char1_addr=%p\n"</span>,&amp;char1);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"char *cptr ='1'\t\t\t\t cptr_addr=%p\n"</span>,&amp;cptr);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"value of the cptr \t\t\t cptr_value=0x%p\n"</span>,cptr);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"value of %p \t\t\t value_0x%p = %d\n"</span>,cptr,cptr,*cptr);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"int* heap = malloc(sizeof(int)*4)\t heap_addr =%p\n"</span>,heap);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"int* heap = malloc(sizeof(int)*4)\t &amp;heap_addr =%p\n"</span>,&amp;heap);</span><br><span class="line"></span><br><span class="line">    pause();</span><br><span class="line"></span><br><span class="line">    <span class="built_in">free</span>(heap);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>; </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">walkerrev_ll@ll-PC:~&#x2F;Desktop&#x2F;Linux&#x2F;第12章$ .&#x2F;test</span><br><span class="line">PID is :44831</span><br><span class="line">int A                           A_addr&#x3D;0x40407c  &#x2F;&#x2F;  全局变量</span><br><span class="line">int B&#x3D;0                         B_addr&#x3D;0x404068  &#x2F;&#x2F;  全局变量</span><br><span class="line">int C&#x3D;2                         C_addr&#x3D;0x404058  &#x2F;&#x2F;  全局变量</span><br><span class="line">static int D            D_addr&#x3D;0x40406c          &#x2F;&#x2F;  未初始化的全局静态变量</span><br><span class="line">static int E&#x3D;0          E_addr&#x3D;0x404070			 &#x2F;&#x2F;  已经初始化的全局静态变量</span><br><span class="line">static int F&#x3D;4          F_addr&#x3D;0x40405c			 &#x2F;&#x2F;  已经初始化的全局静态变量</span><br><span class="line">static int G&#x3D;5          G_addr&#x3D;0x402008			 &#x2F;&#x2F;  已经初始化的全局静态变量</span><br><span class="line">const int H&#x3D;6           H_addr&#x3D;0x40200c          &#x2F;&#x2F;  只读的全局变量</span><br><span class="line"></span><br><span class="line">int a                           a_addr&#x3D;0x7ffdca74b5ac    &#x2F;&#x2F;  局部变量</span><br><span class="line">int b&#x3D;0                         B_addr&#x3D;0x7ffdca74b5a8    &#x2F;&#x2F;  局部变量</span><br><span class="line">int c&#x3D;2                         c_addr&#x3D;0x7ffdca74b5a4    &#x2F;&#x2F;  局部变量</span><br><span class="line"></span><br><span class="line">static int d            d_addr&#x3D;0x404074                  &#x2F;&#x2F;  未初始化的局部静态变量</span><br><span class="line">static int e&#x3D;0          e_addr&#x3D;0x404078					 &#x2F;&#x2F;  已经初始化的局部静态变量</span><br><span class="line">static int f&#x3D;4          f_addr&#x3D;0x404060					 &#x2F;&#x2F;  已经初始化的局部静态变量</span><br><span class="line">const int g&#x3D;5           g_addr&#x3D;0x7ffdca74b5a0            &#x2F;&#x2F;  只读的局部变量</span><br><span class="line"></span><br><span class="line">char char1[]&#x3D;&#39;abcde&#39;                     char1_addr&#x3D;0x7ffdca74b59a    &#x2F;&#x2F;  局部变量</span><br><span class="line">char char1[]&#x3D;&#39;abcde&#39;                     &amp;char1_addr&#x3D;0x7ffdca74b59a   &#x2F;&#x2F;  </span><br><span class="line">char *cptr &#x3D;&#39;1&#39;                          cptr_addr&#x3D;0x7ffdca74b590     &#x2F;&#x2F;  指针局部变量</span><br><span class="line">value of the cptr                        cptr_value&#x3D;0x0x40200d</span><br><span class="line">value of 0x40200d                        value_0x0x40200d &#x3D; 49		  </span><br><span class="line">int* heap &#x3D; malloc(sizeof(int)*4)        heap_addr &#x3D;0xd34260		  &#x2F;&#x2F;  堆</span><br><span class="line">int* heap &#x3D; malloc(sizeof(int)*4)        &amp;heap_addr &#x3D;0x7ffdca74b588   &#x2F;&#x2F;  栈</span><br></pre></td></tr></table></figure>
+
+<p>我们查看test文件的各种段信息</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">test：     文件格式 elf64-x86-64</span><br><span class="line"></span><br><span class="line">节：</span><br><span class="line">Idx Name          Size      VMA               LMA               File off  Algn</span><br><span class="line">  0 .interp       0000001c  00000000004002a8  00000000004002a8  000002a8  2**0</span><br><span class="line">                  CONTENTS, ALLOC, LOAD, READONLY, DATA</span><br><span class="line">  1 .note.ABI-tag 00000020  00000000004002c4  00000000004002c4  000002c4  2**2</span><br><span class="line">                  CONTENTS, ALLOC, LOAD, READONLY, DATA</span><br><span class="line">  2 .note.gnu.build-id 00000024  00000000004002e4  00000000004002e4  000002e4  2**2</span><br><span class="line">                  CONTENTS, ALLOC, LOAD, READONLY, DATA</span><br><span class="line">  3 .gnu.hash     0000001c  0000000000400308  0000000000400308  00000308  2**3</span><br><span class="line">                  CONTENTS, ALLOC, LOAD, READONLY, DATA</span><br><span class="line">  4 .dynsym       000000d8  0000000000400328  0000000000400328  00000328  2**3</span><br><span class="line">                  CONTENTS, ALLOC, LOAD, READONLY, DATA</span><br><span class="line">  5 .dynstr       00000060  0000000000400400  0000000000400400  00000400  2**0</span><br><span class="line">                  CONTENTS, ALLOC, LOAD, READONLY, DATA</span><br><span class="line">  6 .gnu.version  00000012  0000000000400460  0000000000400460  00000460  2**1</span><br><span class="line">                  CONTENTS, ALLOC, LOAD, READONLY, DATA</span><br><span class="line">  7 .gnu.version_r 00000020  0000000000400478  0000000000400478  00000478  2**3</span><br><span class="line">                  CONTENTS, ALLOC, LOAD, READONLY, DATA</span><br><span class="line">  8 .rela.dyn     00000030  0000000000400498  0000000000400498  00000498  2**3</span><br><span class="line">                  CONTENTS, ALLOC, LOAD, READONLY, DATA</span><br><span class="line">  9 .rela.plt     00000090  00000000004004c8  00000000004004c8  000004c8  2**3</span><br><span class="line">                  CONTENTS, ALLOC, LOAD, READONLY, DATA</span><br><span class="line"> 10 .init         00000017  0000000000401000  0000000000401000  00001000  2**2</span><br><span class="line">                  CONTENTS, ALLOC, LOAD, READONLY, CODE</span><br><span class="line"> 11 .plt          00000070  0000000000401020  0000000000401020  00001020  2**4</span><br><span class="line">                  CONTENTS, ALLOC, LOAD, READONLY, CODE</span><br><span class="line"> 12 .text         000003b1  0000000000401090  0000000000401090  00001090  2**4</span><br><span class="line">                  CONTENTS, ALLOC, LOAD, READONLY, CODE</span><br><span class="line"> 13 .fini         00000009  0000000000401444  0000000000401444  00001444  2**2</span><br><span class="line">                  CONTENTS, ALLOC, LOAD, READONLY, CODE</span><br><span class="line"> 14 .rodata       000002c3  0000000000402000  0000000000402000  00002000  2**3</span><br><span class="line">                  CONTENTS, ALLOC, LOAD, READONLY, DATA</span><br><span class="line"> 15 .eh_frame_hdr 0000003c  00000000004022c4  00000000004022c4  000022c4  2**2</span><br><span class="line">                  CONTENTS, ALLOC, LOAD, READONLY, DATA</span><br><span class="line"> 16 .eh_frame     00000100  0000000000402300  0000000000402300  00002300  2**3</span><br><span class="line">                  CONTENTS, ALLOC, LOAD, READONLY, DATA</span><br><span class="line"> 17 .init_array   00000008  0000000000403e10  0000000000403e10  00002e10  2**3</span><br><span class="line">                  CONTENTS, ALLOC, LOAD, DATA</span><br><span class="line"> 18 .fini_array   00000008  0000000000403e18  0000000000403e18  00002e18  2**3</span><br><span class="line">                  CONTENTS, ALLOC, LOAD, DATA</span><br><span class="line"> 19 .dynamic      000001d0  0000000000403e20  0000000000403e20  00002e20  2**3</span><br><span class="line">                  CONTENTS, ALLOC, LOAD, DATA</span><br><span class="line"> 20 .got          00000010  0000000000403ff0  0000000000403ff0  00002ff0  2**3</span><br><span class="line">                  CONTENTS, ALLOC, LOAD, DATA</span><br><span class="line"> 21 .got.plt      00000048  0000000000404000  0000000000404000  00003000  2**3</span><br><span class="line">                  CONTENTS, ALLOC, LOAD, DATA</span><br><span class="line"> 22 .data         0000001c  0000000000404048  0000000000404048  00003048  2**3</span><br><span class="line">                  CONTENTS, ALLOC, LOAD, DATA</span><br><span class="line"> 23 .bss          0000001c  0000000000404064  0000000000404064  00003064  2**2</span><br><span class="line">                  ALLOC</span><br><span class="line"> 24 .comment      00000023  0000000000000000  0000000000000000  00003064  2**0</span><br><span class="line">                  CONTENTS, READONLY</span><br><span class="line"> 25 .debug_aranges 00000030  0000000000000000  0000000000000000  00003087  2**0</span><br><span class="line">                  CONTENTS, READONLY, DEBUGGING</span><br><span class="line"> 26 .debug_info   000004af  0000000000000000  0000000000000000  000030b7  2**0</span><br><span class="line">                  CONTENTS, READONLY, DEBUGGING</span><br><span class="line"> 27 .debug_abbrev 00000116  0000000000000000  0000000000000000  00003566  2**0</span><br><span class="line">                  CONTENTS, READONLY, DEBUGGING</span><br><span class="line"> 28 .debug_line   00000181  0000000000000000  0000000000000000  0000367c  2**0</span><br><span class="line">                  CONTENTS, READONLY, DEBUGGING</span><br><span class="line"> 29 .debug_str    0000028b  0000000000000000  0000000000000000  000037fd  2**0</span><br><span class="line">                  CONTENTS, READONLY, DEBUGGING</span><br></pre></td></tr></table></figure>
+
+<p>我们再看一下进程中的虚拟空间分布：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line">walkerrev_ll@ll-PC:~&#x2F;Desktop&#x2F;Linux&#x2F;第12章$ cat &#x2F;proc&#x2F;46748&#x2F;maps</span><br><span class="line">00400000-00401000 r--p 00000000 08:07 1055621                        </span><br><span class="line"></span><br><span class="line">&#x2F;home&#x2F;walkerrev_ll&#x2F;Desktop&#x2F;Linux&#x2F;第12章&#x2F;test								&#x2F;&#x2F;  .text</span><br><span class="line">00401000-00402000 r-xp 00001000 08:07 1055621                       </span><br><span class="line"></span><br><span class="line">&#x2F;home&#x2F;walkerrev_ll&#x2F;Desktop&#x2F;Linux&#x2F;第12章&#x2F;test</span><br><span class="line">00402000-00403000 r--p 00002000 08:07 1055621                            &#x2F;&#x2F;  </span><br><span class="line"></span><br><span class="line">&#x2F;home&#x2F;walkerrev_ll&#x2F;Desktop&#x2F;Linux&#x2F;第12章&#x2F;test</span><br><span class="line">00403000-00404000 r--p 00002000 08:07 1055621                            &#x2F;&#x2F;  </span><br><span class="line"></span><br><span class="line">&#x2F;home&#x2F;walkerrev_ll&#x2F;Desktop&#x2F;Linux&#x2F;第12章&#x2F;test</span><br><span class="line">00404000-00405000 rw-p 00003000 08:07 1055621  							 &#x2F;&#x2F;   </span><br><span class="line"></span><br><span class="line">&#x2F;home&#x2F;walkerrev_ll&#x2F;Desktop&#x2F;Linux&#x2F;第12章&#x2F;test</span><br><span class="line">01776000-01797000 rw-p 00000000 00:00 0                                  [heap]</span><br><span class="line"></span><br><span class="line">7f4d115bf000-7f4d115e1000 r--p 00000000 08:05 138774                     &#x2F;usr&#x2F;lib&#x2F;x86_64-linux-gnu&#x2F;libc-2.28.so</span><br><span class="line">7f4d115e1000-7f4d11729000 r-xp 00022000 08:05 138774                     &#x2F;usr&#x2F;lib&#x2F;x86_64-linux-gnu&#x2F;libc-2.28.so</span><br><span class="line">7f4d11729000-7f4d11775000 r--p 0016a000 08:05 138774                     &#x2F;usr&#x2F;lib&#x2F;x86_64-linux-gnu&#x2F;libc-2.28.so</span><br><span class="line">7f4d11775000-7f4d11776000 ---p 001b6000 08:05 138774                     &#x2F;usr&#x2F;lib&#x2F;x86_64-linux-gnu&#x2F;libc-2.28.so</span><br><span class="line">7f4d11776000-7f4d1177a000 r--p 001b6000 08:05 138774                     &#x2F;usr&#x2F;lib&#x2F;x86_64-linux-gnu&#x2F;libc-2.28.so</span><br><span class="line">7f4d1177a000-7f4d1177c000 rw-p 001ba000 08:05 138774                     &#x2F;usr&#x2F;lib&#x2F;x86_64-linux-gnu&#x2F;libc-2.28.so</span><br><span class="line">7f4d1177c000-7f4d11782000 rw-p 00000000 00:00 0 </span><br><span class="line">7f4d1179e000-7f4d1179f000 r--p 00000000 08:05 137789                     &#x2F;usr&#x2F;lib&#x2F;x86_64-linux-gnu&#x2F;ld-2.28.so</span><br><span class="line">7f4d1179f000-7f4d117bd000 r-xp 00001000 08:05 137789                     &#x2F;usr&#x2F;lib&#x2F;x86_64-linux-gnu&#x2F;ld-2.28.so</span><br><span class="line">7f4d117bd000-7f4d117c5000 r--p 0001f000 08:05 137789                     &#x2F;usr&#x2F;lib&#x2F;x86_64-linux-gnu&#x2F;ld-2.28.so</span><br><span class="line">7f4d117c5000-7f4d117c6000 r--p 00026000 08:05 137789                     &#x2F;usr&#x2F;lib&#x2F;x86_64-linux-gnu&#x2F;ld-2.28.so</span><br><span class="line">7f4d117c6000-7f4d117c7000 rw-p 00027000 08:05 137789                     &#x2F;usr&#x2F;lib&#x2F;x86_64-linux-gnu&#x2F;ld-2.28.so</span><br><span class="line"></span><br><span class="line">7f4d117c7000-7f4d117c8000 rw-p 00000000 00:00 0 </span><br><span class="line"></span><br><span class="line">7fff9ae98000-7fff9aebb000 rw-p 00000000 00:00 0                          [stack]</span><br><span class="line"></span><br><span class="line">7fff9af01000-7fff9af04000 r--p 00000000 00:00 0                          [vvar]</span><br><span class="line"></span><br><span class="line">7fff9af04000-7fff9af05000 r-xp 00000000 00:00 0                          [vdso]</span><br><span class="line">ffffffffff600000-ffffffffff601000 --xp 00000000 00:00 0                 [vsyscall]</span><br></pre></td></tr></table></figure>
+
+<p>我们总结一下：</p>
+<ul>
+<li>.data段保存的是那些已经初始化了的全局静态变量和局部静态变量</li>
+<li>.rodata段存放的是只读数据，一般是程序里面的只读变量和字符串常量</li>
+<li>.bss段存放的是未初始化的全局变量和局部静态变量</li>
+<li>程序被加载进内存之后，在执行的时候需要用到栈、堆等空间，他们在进程中的存在也是以虚拟内存区域的形式存在的<ol>
+<li>栈中存放的是局部变量</li>
+<li>堆中的内存空间的是程序员自己手动申请的，使用完之后需要释放。</li>
+</ol>
+</li>
+</ul>
+
+        </div>
+
+        
+            <section class="post-copyright">
+                
+                    <p class="copyright-item">
+                        <span>Author:</span>
+                        <span>Dang Yanlin</span>
+                    </p>
+                
+                
+                
+                
+
+            </section>
+        
+	
+    <section id="comments" class="comments">
+      <style>
+        .comments{margin:30px;padding:10px;background:#fff}
+        @media screen and (max-width:800px){.comments{margin:auto;padding:10px;background:#fff}}
+      </style>
+      <div class="valine_comment"></div>
+<!--载入js，在</body>之前插入即可-->
+<!--Leancloud 操作库:-->
+<script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+<!--Valine 的核心代码库-->
+<script src="//unpkg.com/valine/dist/Valine.min.js"></script>
+<script>
+  new Valine({
+      el: '.valine_comment',
+      app_id: 'fdPvG8U2K2eUc1GnjTey5gwg-gzGzoHsz',
+      app_key: 'pSEhojKlFNh8eGAU3WfuDsDC',
+      placeholder: '这里留言。。',
+      notify: 'true',
+      verify: 'true',
+    });
+</script>
+    </section>
+
+        <section class="post-tags">
+            <div>
+                <span>Tag(s):</span>
+                <span class="tag">
+                    
+                    
+                        <a href="/%E6%A0%87%E7%AD%BE/Linux/"># Linux</a>
+                    
+                        <a href="/%E6%A0%87%E7%AD%BE/%E7%A8%8B%E5%BA%8F%E5%91%98%E7%9A%84%E8%87%AA%E6%88%91%E4%BF%AE%E5%85%BB/"># 程序员的自我修养</a>
+                    
+                        
+                </span>
+            </div>
+            <div>
+                <a href="javascript:window.history.back();">back</a>
+                <span>· </span>
+                <a href="/">home</a>
+            </div>
+        </section>
+        <section class="post-nav">
+            
+            
+            <a class="next" rel="next" href="/2020/11/27/%E8%A2%AB%E9%9A%90%E8%97%8F%E4%BA%86%E7%9A%84%E8%BF%87%E7%A8%8B%EF%BC%88%E4%BB%8E%E7%A8%8B%E5%BA%8F%E6%BA%90%E4%BB%A3%E7%A0%81%E5%88%B0%E5%8F%AF%E6%89%A7%E8%A1%8C%E6%96%87%E4%BB%B6%E7%BB%8F%E5%8E%86%E4%BA%86%E4%BB%80%E4%B9%88%EF%BC%9F%EF%BC%89/">被隐藏了的过程（从程序源代码到可执行文件经历了什么？）</a>
+            
+        </section>
+
+    </article>
+</div>
+
+        </div>
+        <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js">
+</script>
+<footer id="footer" class="footer">
+    <div class="copyright">
+        <span>© 2020 | Powered by Dang Yanlin </span>
+已经建站 <b id='build_time'></b>
+		<span id="busuanzi_container_site_pv" style="display: none;">本站总访问量<span id="busuanzi_value_site_pv"></span>次</span>  <span id="busuanzi_container_site_uv" style="display: none;">本站访客数<span id="busuanzi_value_site_uv"</span>人</span>
+    </div>
+</footer>
+<script src="https://cdn.jsdelivr.net/gh/ITJoker233/ITJoker233.github.io/CDN/js/time.min.js"></script>
+        <script>setInterval(show_date_time, 1000, '2020-04-10');</script>
+<script>setInterval(show_date_time, 1000, '2020-04-10');</script>
+    </div>
+</body>
+</html>
