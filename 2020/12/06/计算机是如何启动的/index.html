@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+    <meta name="author" content="Dang Yanlin">
+
+
+    <meta name="subtitle" content="linlin">
+
+
+    <meta name="description" content="逆向 re 网络安全 二进制">
+
+
+
+<title>计算机是如何启动的 | WalkerRev&#39;s blog</title>
+
+
+
+    <link rel="icon" href="/favicon.ico">
+
+
+
+
+    <!-- stylesheets list from _config.yml -->
+    
+    <link rel="stylesheet" href="/css/style.css">
+    
+
+
+
+    <!-- scripts list from _config.yml -->
+    
+    <script src="/js/script.js"></script>
+    
+    <script src="/js/tocbot.min.js"></script>
+    
+
+
+
+    
+    
+        
+    
+
+
+<meta name="generator" content="Hexo 4.2.0"></head>
+<body>
+    <div class="wrapper">
+        <header>
+    <nav class="navbar">
+        <div class="container">
+            <div class="navbar-header header-logo"><a href="/">Linlin&#39;s Blog</a></div>
+            <div class="menu navbar-right">
+                
+                    <a class="menu-item" href="/archives">博客</a>
+                
+                    <a class="menu-item" href="/category">目录</a>
+                
+                    <a class="menu-item" href="/tag">标签</a>
+                
+                    <a class="menu-item" href="https://me.csdn.net/qq_42689353" target="_blank" rel="noopener">CSDN</a>
+                
+                <input id="switch_default" type="checkbox" class="switch_default">
+                <label for="switch_default" class="toggleBtn"></label>
+            </div>
+        </div>
+    </nav>
+
+    
+    <nav class="navbar-mobile" id="nav-mobile">
+        <div class="container">
+            <div class="navbar-header">
+                <div>
+                    <a href="/">Linlin&#39;s Blog</a><a id="mobile-toggle-theme">·&nbsp;Light</a>
+                </div>
+                <div class="menu-toggle" onclick="mobileBtn()">&#9776; Menu</div>
+            </div>
+            <div class="menu" id="mobile-menu">
+                
+                    <a class="menu-item" href="/archives">博客</a>
+                
+                    <a class="menu-item" href="/category">目录</a>
+                
+                    <a class="menu-item" href="/tag">标签</a>
+                
+                    <a class="menu-item" href="https://me.csdn.net/qq_42689353" target="_blank" rel="noopener">CSDN</a>
+                
+            </div>
+        </div>
+    </nav>
+
+</header>
+<script>
+    var mobileBtn = function f() {
+        var toggleMenu = document.getElementsByClassName("menu-toggle")[0];
+        var mobileMenu = document.getElementById("mobile-menu");
+        if(toggleMenu.classList.contains("active")){
+           toggleMenu.classList.remove("active")
+            mobileMenu.classList.remove("active")
+        }else{
+            toggleMenu.classList.add("active")
+            mobileMenu.classList.add("active")
+        }
+    }
+</script>
+        <div class="main">
+            <div class="container">
+    
+    
+        <div class="post-toc">
+    <div class="tocbot-list">
+    </div>
+    <div class="tocbot-list-menu">
+        <a class="tocbot-toc-expand" onclick="expand_toc()">Expand all</a>
+        <a onclick="go_top()">Back to top</a>
+        <a onclick="go_bottom()">Go to bottom</a>
+    </div>
+</div>
+
+<script>
+    document.ready(
+        function () {
+            tocbot.init({
+                tocSelector: '.tocbot-list',
+                contentSelector: '.post-content',
+                headingSelector: 'h1, h2, h3, h4, h5',
+                collapseDepth: 1,
+                orderedList: false,
+                scrollSmooth: true,
+            })
+        }
+    )
+
+    function expand_toc() {
+        var b = document.querySelector(".tocbot-toc-expand");
+        tocbot.init({
+            tocSelector: '.tocbot-list',
+            contentSelector: '.post-content',
+            headingSelector: 'h1, h2, h3, h4, h5',
+            collapseDepth: 6,
+            orderedList: false,
+            scrollSmooth: true,
+        });
+        b.setAttribute("onclick", "collapse_toc()");
+        b.innerHTML = "Collapse all"
+    }
+
+    function collapse_toc() {
+        var b = document.querySelector(".tocbot-toc-expand");
+        tocbot.init({
+            tocSelector: '.tocbot-list',
+            contentSelector: '.post-content',
+            headingSelector: 'h1, h2, h3, h4, h5',
+            collapseDepth: 1,
+            orderedList: false,
+            scrollSmooth: true,
+        });
+        b.setAttribute("onclick", "expand_toc()");
+        b.innerHTML = "Expand all"
+    }
+
+    function go_top() {
+        window.scrollTo(0, 0);
+    }
+
+    function go_bottom() {
+        window.scrollTo(0, document.body.scrollHeight);
+    }
+
+</script>
+    
+
+    
+    <article class="post-wrap">
+        <header class="post-header">
+            <h1 class="post-title">计算机是如何启动的</h1>
+            
+                <div class="post-meta">
+                    
+                        Author: <a itemprop="author" rel="author" href="/">Dang Yanlin</a>
+                    
+
+                    
+                        <span class="post-time">
+                        Date: <a href="#">December 6, 2020&nbsp;&nbsp;20:13:10</a>
+                        </span>
+                    
+                    
+	<div style="margin-top:10px;">
+    <span class="post-time">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-keyboard-o"></i>
+        <span class="post-meta-item-text">  字数统计: </span>
+        <span class="post-count">3,178字</span>
+      </span>
+    </span>
+
+    <span class="post-time">
+      &nbsp; | &nbsp;
+      <span class="post-meta-item-icon">
+        <i class="fa fa-hourglass-half"></i>
+        <span class="post-meta-item-text">  阅读时长: </span>
+        <span class="post-count">18分</span>
+      </span>
+    </span>
+</div>
+           
+                </div>
+            
+        </header>
+
+        <div class="post-content">
+            <h1 id="1、计算机是如何启动的？"><a href="#1、计算机是如何启动的？" class="headerlink" title="1、计算机是如何启动的？"></a>1、计算机是如何启动的？</h1><h2 id="实验环境"><a href="#实验环境" class="headerlink" title="实验环境"></a>实验环境</h2><p>实验楼</p>
+<h3 id="实验工具："><a href="#实验工具：" class="headerlink" title="实验工具："></a>实验工具：</h3><p>Linux 0.11 源码</p>
+<p>Bochs:Bochs 是一个免费且开放源代码的 IA-32（x86）架构 PC 机模拟器。在它模拟出的环境中可以运行 Linux、DOS 和各种版本的 Windows 等多种操作系统。</p>
+<p>gcc</p>
+<h2 id="实验过程"><a href="#实验过程" class="headerlink" title="实验过程"></a>实验过程</h2><p><strong>## BIOS是如何被加载的</strong></p>
+<p>BIOS是由硬件（印在主板上的只读存储器ROM）加载的。</p>
+<p>在接电的一瞬间，CPU的CS:IP寄存器被强制初始化为OxF000:OxFFF0 物理地址就是0xFFFF0 此地址就是BIOS的入口地址</p>
+<p><img src="image-20201130110136252.png" alt="image-20201130110136252"></p>
+<p>BOIS代码真正开始的地方是 0xfe05b处，接下来BIOS便马不停蹄的检测内存、显卡等外设信息，检测通过，然后就初始化硬件</p>
+<p>BIOS最后一项工作是检验启动盘中位于0盘0道1扇区的内容，如果此扇区末尾最后两个字节是0x55和0xaa,就会跳转到0x7C00（MBR 主引导（bootsect））处继续去执行。</p>
+<p><img src="image-20201130110613140.png" alt="image-20201130110613140"></p>
+<p><strong>#  BootSect？</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br></pre></td><td class="code"><pre><span class="line">_start:</span><br><span class="line">	mov	ax,#BOOTSEG</span><br><span class="line">	mov	ds,ax</span><br><span class="line">	mov	ax,#INITSEG</span><br><span class="line">	mov	es,ax</span><br><span class="line">	mov	cx,#256</span><br><span class="line">	sub	si,si</span><br><span class="line">	sub	di,di</span><br><span class="line">	rep</span><br><span class="line">	movw</span><br><span class="line">	jmpi	go,INITSEG</span><br><span class="line">go:	mov	ax,cs</span><br><span class="line">	mov	ds,ax</span><br><span class="line">	mov	es,ax</span><br><span class="line">! put stack at 0x9ff00.</span><br><span class="line">	mov	ss,ax</span><br><span class="line">	mov	sp,#0xFF00		! arbitrary value &gt;&gt;512</span><br><span class="line"></span><br><span class="line">! load the setup-sectors directly after the bootblock.</span><br><span class="line">! Note that &#39;es&#39; is already set up.</span><br><span class="line"> </span><br><span class="line">&#x2F;&#x2F;  BIOS读取磁盘扇区中断</span><br><span class="line"></span><br><span class="line">load_setup:</span><br><span class="line">	mov	dx,#0x0000		! drive 0, head 0</span><br><span class="line">	mov	cx,#0x0002		! sector 2, track 0</span><br><span class="line">	mov	bx,#0x0200		! address &#x3D; 512, in INITSEG</span><br><span class="line">	mov	ax,#0x0200+SETUPLEN	! service 2, nr of sectors</span><br><span class="line">	int	0x13			! read it</span><br><span class="line">	jnc	ok_load_setup		! ok - continue</span><br><span class="line">	mov	dx,#0x0000</span><br><span class="line">	mov	ax,#0x0000		! reset the diskette</span><br><span class="line">	int	0x13</span><br><span class="line">	j	load_setup</span><br><span class="line"></span><br><span class="line">ok_load_setup:</span><br><span class="line"></span><br><span class="line">&#x2F;&#x2F;  载入Setup模块</span><br><span class="line"></span><br><span class="line">! Get disk drive parameters, specifically nr of sectors&#x2F;track</span><br><span class="line"></span><br><span class="line">	mov	dl,#0x00</span><br><span class="line">	mov	ax,#0x0800		! AH&#x3D;8 is get drive parameters</span><br><span class="line">	int	0x13</span><br><span class="line">	mov	ch,#0x00</span><br><span class="line">	seg cs</span><br><span class="line">	mov	sectors,cx</span><br><span class="line">	mov	ax,#INITSEG</span><br><span class="line">	mov	es,ax</span><br><span class="line"></span><br><span class="line">! Print some inane message</span><br><span class="line"></span><br><span class="line">&#x2F;&#x2F;  打印信息</span><br><span class="line"></span><br><span class="line">	mov	ah,#0x03		! read cursor pos</span><br><span class="line">	xor	bh,bh</span><br><span class="line">	int	0x10</span><br><span class="line">	</span><br><span class="line">	mov	cx,#24</span><br><span class="line">	mov	bx,#0x0007		! page 0, attribute 7 (normal)</span><br><span class="line">	mov	bp,#msg1</span><br><span class="line">	mov	ax,#0x1301		! write string, move cursor</span><br><span class="line">	int	0x10</span><br><span class="line">! ok, we&#39;ve written the message, now</span><br><span class="line">! we want to load the system (at 0x10000)</span><br><span class="line"></span><br><span class="line">	mov	ax,#SYSSEG</span><br><span class="line">	mov	es,ax		! segment of 0x010000</span><br><span class="line">	call	read_it		&#x2F;&#x2F;  读入system模块</span><br><span class="line">	call	kill_motor</span><br><span class="line"></span><br><span class="line">! After that we check which root-device to use. If the device is</span><br><span class="line">! defined (!&#x3D; 0), nothing is done and the given device is used.</span><br><span class="line">! Otherwise, either &#x2F;dev&#x2F;PS0 (2,28) or &#x2F;dev&#x2F;at0 (2,8), depending</span><br><span class="line">! on the number of sectors that the BIOS reports currently.</span><br><span class="line"></span><br><span class="line">	seg cs</span><br><span class="line">	mov	ax,root_dev</span><br><span class="line">	cmp	ax,#0</span><br><span class="line">	jne	root_defined</span><br><span class="line">	seg cs</span><br><span class="line">	mov	bx,sectors</span><br><span class="line">	mov	ax,#0x0208		! &#x2F;dev&#x2F;ps0 - 1.2Mb</span><br><span class="line">	cmp	bx,#15</span><br><span class="line">	je	root_defined</span><br><span class="line">	mov	ax,#0x021c		! &#x2F;dev&#x2F;PS0 - 1.44Mb</span><br><span class="line">	cmp	bx,#18</span><br><span class="line">	je	root_defined</span><br><span class="line">undef_root:</span><br><span class="line">	jmp undef_root</span><br><span class="line">root_defined:</span><br><span class="line">	seg cs</span><br><span class="line">	mov	root_dev,ax</span><br><span class="line"></span><br><span class="line">! after that (everyting loaded), we jump to</span><br><span class="line">! the setup-routine loaded directly after</span><br><span class="line">! the bootblock:</span><br><span class="line"></span><br><span class="line">	jmpi	0,SETUPSEG</span><br></pre></td></tr></table></figure>
+
+<p>上面这段代码是Linux 0.11 中的源代码</p>
+<p>分析这段代码可以看出来：</p>
+<p>为了防止从0x7C00开始的引导代码被破坏，首先把从这里开始的512字节的代码复制到0x90000处，然后跳转到那里去执行，然后读取磁盘的内容，读入Setup模块以及System模块，并打印信息，然后跳转到    0x90200处去执行。</p>
+<p><img src="image-20201130123404351.png" alt="image-20201130123404351"></p>
+<p><strong># Setup？</strong></p>
+<p>Setup模块将完成操作系统启动前的设置。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br><span class="line">181</span><br><span class="line">182</span><br><span class="line">183</span><br><span class="line">184</span><br><span class="line">185</span><br><span class="line">186</span><br><span class="line">187</span><br><span class="line">188</span><br><span class="line">189</span><br><span class="line">190</span><br><span class="line">191</span><br><span class="line">192</span><br><span class="line">193</span><br><span class="line">194</span><br><span class="line">195</span><br><span class="line">196</span><br></pre></td><td class="code"><pre><span class="line">start:</span><br><span class="line"></span><br><span class="line">! ok, the read went well so we get current cursor position and save it for</span><br><span class="line">! posterity.</span><br><span class="line"></span><br><span class="line">	mov	ax,#INITSEG	! this is done in bootsect already, but...</span><br><span class="line">	mov	ds,ax</span><br><span class="line">	mov	ah,#0x03	! read cursor pos</span><br><span class="line">	xor	bh,bh</span><br><span class="line">	int	0x10		! save it in known place, con_init fetches</span><br><span class="line">	mov	[0],dx		! it from 0x90000.</span><br><span class="line">! Get memory size (extended mem, kB)</span><br><span class="line"></span><br><span class="line">	mov	ah,#0x88</span><br><span class="line">	int	0x15</span><br><span class="line">	mov	[2],ax</span><br><span class="line"></span><br><span class="line">&#x2F;&#x2F;  获取内存容量</span><br><span class="line"></span><br><span class="line">! Get video-card data:</span><br><span class="line"></span><br><span class="line">	mov	ah,#0x0f</span><br><span class="line">	int	0x10</span><br><span class="line">	mov	[4],bx		! bh &#x3D; display page</span><br><span class="line">	mov	[6],ax		! al &#x3D; video mode, ah &#x3D; window width</span><br><span class="line"></span><br><span class="line">! check for EGA&#x2F;VGA and some config parameters</span><br><span class="line"></span><br><span class="line">	mov	ah,#0x12</span><br><span class="line">	mov	bl,#0x10</span><br><span class="line">	int	0x10</span><br><span class="line">	mov	[8],ax</span><br><span class="line">	mov	[10],bx</span><br><span class="line">	mov	[12],cx</span><br><span class="line"></span><br><span class="line">! Get hd0 data</span><br><span class="line"></span><br><span class="line">	mov	ax,#0x0000</span><br><span class="line">	mov	ds,ax</span><br><span class="line">	lds	si,[4*0x41]</span><br><span class="line">	mov	ax,#INITSEG</span><br><span class="line">	mov	es,ax</span><br><span class="line">	mov	di,#0x0080</span><br><span class="line">	mov	cx,#0x10</span><br><span class="line">	rep</span><br><span class="line">	movsb</span><br><span class="line"></span><br><span class="line">! Get hd1 data</span><br><span class="line"></span><br><span class="line">	mov	ax,#0x0000</span><br><span class="line">	mov	ds,ax</span><br><span class="line">	lds	si,[4*0x46]</span><br><span class="line">	mov	ax,#INITSEG</span><br><span class="line">	mov	es,ax</span><br><span class="line">	mov	di,#0x0090</span><br><span class="line">	mov	cx,#0x10</span><br><span class="line">	rep</span><br><span class="line">	movsb</span><br><span class="line"></span><br><span class="line">! Check that there IS a hd1 :-)</span><br><span class="line"></span><br><span class="line">	mov	ax,#0x01500</span><br><span class="line">	mov	dl,#0x81</span><br><span class="line">	int	0x13</span><br><span class="line">	jc	no_disk1</span><br><span class="line">	cmp	ah,#3</span><br><span class="line">	je	is_disk1</span><br><span class="line">no_disk1:</span><br><span class="line">	mov	ax,#INITSEG</span><br><span class="line">	mov	es,ax</span><br><span class="line">	mov	di,#0x0090</span><br><span class="line">	mov	cx,#0x10</span><br><span class="line">	mov	ax,#0x00</span><br><span class="line">	rep</span><br><span class="line">	stosb</span><br><span class="line">is_disk1:</span><br><span class="line"></span><br><span class="line">! now we want to move to protected mode ...</span><br><span class="line"></span><br><span class="line">	cli			! no interrupts allowed !</span><br><span class="line"></span><br><span class="line">! first we move the system to it&#39;s rightful place</span><br><span class="line"></span><br><span class="line">	mov	ax,#0x0000</span><br><span class="line">	cld			! &#39;direction&#39;&#x3D;0, movs moves forward</span><br><span class="line">do_move:</span><br><span class="line">	mov	es,ax		! destination segment</span><br><span class="line">	add	ax,#0x1000</span><br><span class="line">	cmp	ax,#0x9000</span><br><span class="line">	jz	end_move</span><br><span class="line">	mov	ds,ax		! source segment</span><br><span class="line">	sub	di,di</span><br><span class="line">	sub	si,si</span><br><span class="line">	mov 	cx,#0x8000</span><br><span class="line">	rep</span><br><span class="line">	movsw</span><br><span class="line">	jmp	do_move</span><br><span class="line"></span><br><span class="line">! then we load the segment descriptors</span><br><span class="line"></span><br><span class="line">end_move:</span><br><span class="line">	mov	ax,#SETUPSEG	! right, forgot this at first. didn&#39;t work :-)</span><br><span class="line">	mov	ds,ax</span><br><span class="line">	lidt	idt_48		! load idt with 0,0</span><br><span class="line">	lgdt	gdt_48		! load gdt with whatever appropriate</span><br><span class="line"></span><br><span class="line">! that was painless, now we enable A20</span><br><span class="line"></span><br><span class="line">	call	empty_8042</span><br><span class="line">	mov	al,#0xD1		! command write</span><br><span class="line">	out	#0x64,al</span><br><span class="line">	call	empty_8042</span><br><span class="line">	mov	al,#0xDF		! A20 on</span><br><span class="line">	out	#0x60,al</span><br><span class="line">	call	empty_8042</span><br><span class="line"></span><br><span class="line">! well, that went ok, I hope. Now we have to reprogram the interrupts :-(</span><br><span class="line">! we put them right after the intel-reserved hardware interrupts, at</span><br><span class="line">! int 0x20-0x2F. There they won&#39;t mess up anything. Sadly IBM really</span><br><span class="line">! messed this up with the original PC, and they haven&#39;t been able to</span><br><span class="line">! rectify it afterwards. Thus the bios puts interrupts at 0x08-0x0f,</span><br><span class="line">! which is used for the internal hardware interrupts as well. We just</span><br><span class="line">! have to reprogram the 8259&#39;s, and it isn&#39;t fun.</span><br><span class="line"></span><br><span class="line">	mov	al,#0x11		! initialization sequence</span><br><span class="line">	out	#0x20,al		! send it to 8259A-1</span><br><span class="line">	.word	0x00eb,0x00eb		! jmp $+2, jmp $+2</span><br><span class="line">	out	#0xA0,al		! and to 8259A-2</span><br><span class="line">	.word	0x00eb,0x00eb</span><br><span class="line">	mov	al,#0x20		! start of hardware int&#39;s (0x20)</span><br><span class="line">	out	#0x21,al</span><br><span class="line">	.word	0x00eb,0x00eb</span><br><span class="line">	mov	al,#0x28		! start of hardware int&#39;s 2 (0x28)</span><br><span class="line">	out	#0xA1,al</span><br><span class="line">	.word	0x00eb,0x00eb</span><br><span class="line">	mov	al,#0x04		! 8259-1 is master</span><br><span class="line">	out	#0x21,al</span><br><span class="line">	.word	0x00eb,0x00eb</span><br><span class="line">	mov	al,#0x02		! 8259-2 is slave</span><br><span class="line">	out	#0xA1,al</span><br><span class="line">	.word	0x00eb,0x00eb</span><br><span class="line">	mov	al,#0x01		! 8086 mode for both</span><br><span class="line">	out	#0x21,al</span><br><span class="line">	.word	0x00eb,0x00eb</span><br><span class="line">	out	#0xA1,al</span><br><span class="line">	.word	0x00eb,0x00eb</span><br><span class="line">	mov	al,#0xFF		! mask off all interrupts for now</span><br><span class="line">	out	#0x21,al</span><br><span class="line">	.word	0x00eb,0x00eb</span><br><span class="line">	out	#0xA1,al</span><br><span class="line"></span><br><span class="line">! well, that certainly wasn&#39;t fun :-(. Hopefully it works, and we don&#39;t</span><br><span class="line">! need no steenking BIOS anyway (except for the initial loading :-).</span><br><span class="line">! The BIOS-routine wants lots of unnecessary data, and it&#39;s less</span><br><span class="line">! &quot;interesting&quot; anyway. This is how REAL programmers do it.</span><br><span class="line">!</span><br><span class="line">! Well, now&#39;s the time to actually move into protected mode. To make</span><br><span class="line">! things as simple as possible, we do no register set-up or anything,</span><br><span class="line">! we let the gnu-compiled 32-bit programs do that. We just jump to</span><br><span class="line">! absolute address 0x00000, in 32-bit protected mode.</span><br><span class="line">	</span><br><span class="line">	mov	ax,#0x0001	! protected mode (PE) bit    &#x2F;&#x2F;  置位</span><br><span class="line">	lmsw	ax		! This is it!	&#x2F;&#x2F;  mov cr0,ax</span><br><span class="line">	jmpi	0,8		! jmp offset 0 of segment 8 (cs)  &#x2F;&#x2F;  临时建立GDT表</span><br><span class="line"></span><br><span class="line">! This routine checks that the keyboard command queue is empty</span><br><span class="line">! No timeout is used - if this hangs there is something wrong with</span><br><span class="line">! the machine, and we probably couldn&#39;t proceed anyway.</span><br><span class="line"></span><br><span class="line">empty_8042:</span><br><span class="line">	.word	0x00eb,0x00eb</span><br><span class="line">	in	al,#0x64	! 8042 status port</span><br><span class="line">	test	al,#2		! is input buffer full?</span><br><span class="line">	jnz	empty_8042	! yes - loop</span><br><span class="line">	ret</span><br><span class="line">	</span><br><span class="line">gdt:</span><br><span class="line">	.word	0,0,0,0		! dummy</span><br><span class="line"></span><br><span class="line">	.word	0x07FF		! 8Mb - limit&#x3D;2047 (2048*4096&#x3D;8Mb)</span><br><span class="line">	.word	0x0000		! base address&#x3D;0</span><br><span class="line">	.word	0x9A00		! code read&#x2F;exec</span><br><span class="line">	.word	0x00C0		! granularity&#x3D;4096, 386</span><br><span class="line"></span><br><span class="line">	.word	0x07FF		! 8Mb - limit&#x3D;2047 (2048*4096&#x3D;8Mb)</span><br><span class="line">	.word	0x0000		! base address&#x3D;0</span><br><span class="line">	.word	0x9200		! data read&#x2F;write</span><br><span class="line">	.word	0x00C0		! granularity&#x3D;4096, 386</span><br><span class="line"></span><br><span class="line">idt_48:</span><br><span class="line">	.word	0			! idt limit&#x3D;0</span><br><span class="line">	.word	0,0			! idt base&#x3D;0L</span><br><span class="line"></span><br><span class="line">gdt_48:</span><br><span class="line">	.word	0x800		! gdt limit&#x3D;2048, 256 GDT entries</span><br><span class="line">	.word	512+gdt,0x9	! gdt base &#x3D; 0X9xxxx</span><br></pre></td></tr></table></figure>
+
+<p>分析这段源代码，我们可以看出首先通过BIOS中断取出各种硬件信息（包括内存容量，硬盘等各种信息），并将信息保存在0x90000处</p>
+<p>然后将System模块移动到0x00000处，加载中断描述表寄存器，和全局描述符表寄存器，开始A20地址线，设置两个中断控制芯片8259A，将硬件中断号重新设置，最后设置CPU控制寄存器CR0，进入32位保护模式运行。最后跳转到0x00000000地址处（System处）去执行。</p>
+<p><img src="image-20201130140851629.png" alt="image-20201130140851629"></p>
+<p><strong># Head？</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br><span class="line">181</span><br><span class="line">182</span><br><span class="line">183</span><br><span class="line">184</span><br><span class="line">185</span><br><span class="line">186</span><br><span class="line">187</span><br><span class="line">188</span><br><span class="line">189</span><br><span class="line">190</span><br><span class="line">191</span><br><span class="line">192</span><br><span class="line">193</span><br><span class="line">194</span><br><span class="line">195</span><br><span class="line">196</span><br><span class="line">197</span><br><span class="line">198</span><br><span class="line">199</span><br><span class="line">200</span><br><span class="line">201</span><br><span class="line">202</span><br><span class="line">203</span><br><span class="line">204</span><br><span class="line">205</span><br><span class="line">206</span><br><span class="line">207</span><br><span class="line">208</span><br><span class="line">209</span><br><span class="line">210</span><br><span class="line">211</span><br><span class="line">212</span><br><span class="line">213</span><br><span class="line">214</span><br><span class="line">215</span><br><span class="line">216</span><br><span class="line">217</span><br><span class="line">218</span><br><span class="line">219</span><br><span class="line">220</span><br><span class="line">221</span><br><span class="line">222</span><br><span class="line">223</span><br><span class="line">224</span><br><span class="line">225</span><br><span class="line">226</span><br><span class="line">227</span><br></pre></td><td class="code"><pre><span class="line">.text</span><br><span class="line">.globl idt,gdt,pg_dir,tmp_floppy_area</span><br><span class="line">pg_dir:</span><br><span class="line">.globl startup_32</span><br><span class="line">startup_32:</span><br><span class="line">	movl $0x10,%eax</span><br><span class="line">	mov %ax,%ds</span><br><span class="line">	mov %ax,%es</span><br><span class="line">	mov %ax,%fs</span><br><span class="line">	mov %ax,%gs</span><br><span class="line">	lss stack_start,%esp</span><br><span class="line">	call setup_idt  &#x2F;&#x2F;  建立idt表</span><br><span class="line">	call setup_gdt  &#x2F;&#x2F;  建立gdt表</span><br><span class="line">	movl $0x10,%eax		# reload all the segment registers</span><br><span class="line">	mov %ax,%ds		# after changing gdt. CS was already</span><br><span class="line">	mov %ax,%es		# reloaded in &#39;setup_gdt&#39;</span><br><span class="line">	mov %ax,%fs</span><br><span class="line">	mov %ax,%gs</span><br><span class="line">	lss stack_start,%esp</span><br><span class="line">	xorl %eax,%eax</span><br><span class="line">1:	incl %eax		# check that A20 really IS enabled</span><br><span class="line">	movl %eax,0x000000	# loop forever if it isn&#39;t</span><br><span class="line">	cmpl %eax,0x100000</span><br><span class="line">	je 1b</span><br><span class="line"></span><br><span class="line">&#x2F;*</span><br><span class="line"> * NOTE! 486 should set bit 16, to check for write-protect in supervisor</span><br><span class="line"> * mode. Then it would be unnecessary with the &quot;verify_area()&quot;-calls.</span><br><span class="line"> * 486 users probably want to set the NE (#5) bit also, so as to use</span><br><span class="line"> * int 16 for math errors.</span><br><span class="line"> *&#x2F;</span><br><span class="line">	movl %cr0,%eax		# check math chip</span><br><span class="line">	andl $0x80000011,%eax	# Save PG,PE,ET</span><br><span class="line">&#x2F;* &quot;orl $0x10020,%eax&quot; here for 486 might be good *&#x2F;</span><br><span class="line">	orl $2,%eax		# set MP</span><br><span class="line">	movl %eax,%cr0</span><br><span class="line">	call check_x87</span><br><span class="line">	jmp after_page_tables</span><br><span class="line"></span><br><span class="line">&#x2F;*</span><br><span class="line"> * We depend on ET to be correct. This checks for 287&#x2F;387.</span><br><span class="line"> *&#x2F;</span><br><span class="line">check_x87:</span><br><span class="line">	fninit</span><br><span class="line">	fstsw %ax</span><br><span class="line">	cmpb $0,%al</span><br><span class="line">	je 1f			&#x2F;* no coprocessor: have to set bits *&#x2F;</span><br><span class="line">	movl %cr0,%eax</span><br><span class="line">	xorl $6,%eax		&#x2F;* reset MP, set EM *&#x2F;</span><br><span class="line">	movl %eax,%cr0</span><br><span class="line">	ret</span><br><span class="line">.align 2</span><br><span class="line">1:	.byte 0xDB,0xE4		&#x2F;* fsetpm for 287, ignored by 387 *&#x2F;</span><br><span class="line">	ret</span><br><span class="line"></span><br><span class="line">&#x2F;*</span><br><span class="line"> *  setup_idt</span><br><span class="line"> *</span><br><span class="line"> *  sets up a idt with 256 entries pointing to</span><br><span class="line"> *  ignore_int, interrupt gates. It then loads</span><br><span class="line"> *  idt. Everything that wants to install itself</span><br><span class="line"> *  in the idt-table may do so themselves. Interrupts</span><br><span class="line"> *  are enabled elsewhere, when we can be relatively</span><br><span class="line"> *  sure everything is ok. This routine will be over-</span><br><span class="line"> *  written by the page tables.</span><br><span class="line"> *&#x2F;</span><br><span class="line">setup_idt:</span><br><span class="line">	lea ignore_int,%edx</span><br><span class="line">	movl $0x00080000,%eax</span><br><span class="line">	movw %dx,%ax		&#x2F;* selector &#x3D; 0x0008 &#x3D; cs *&#x2F;</span><br><span class="line">	movw $0x8E00,%dx	&#x2F;* interrupt gate - dpl&#x3D;0, present *&#x2F;</span><br><span class="line"></span><br><span class="line">	lea idt,%edi</span><br><span class="line">	mov $256,%ecx</span><br><span class="line">rp_sidt:</span><br><span class="line">	movl %eax,(%edi)</span><br><span class="line">	movl %edx,4(%edi)</span><br><span class="line">	addl $8,%edi</span><br><span class="line">	dec %ecx</span><br><span class="line">	jne rp_sidt</span><br><span class="line">	lidt idt_descr</span><br><span class="line">	ret</span><br><span class="line"></span><br><span class="line">&#x2F;*</span><br><span class="line"> *  setup_gdt</span><br><span class="line"> *</span><br><span class="line"> *  This routines sets up a new gdt and loads it.</span><br><span class="line"> *  Only two entries are currently built, the same</span><br><span class="line"> *  ones that were built in init.s. The routine</span><br><span class="line"> *  is VERY complicated at two whole lines, so this</span><br><span class="line"> *  rather long comment is certainly needed :-).</span><br><span class="line"> *  This routine will beoverwritten by the page tables.</span><br><span class="line"> *&#x2F;</span><br><span class="line">setup_gdt:</span><br><span class="line">	lgdt gdt_descr</span><br><span class="line">	ret</span><br><span class="line"></span><br><span class="line">&#x2F;*</span><br><span class="line"> * I put the kernel page tables right after the page directory,</span><br><span class="line"> * using 4 of them to span 16 Mb of physical memory. People with</span><br><span class="line"> * more than 16MB will have to expand this.</span><br><span class="line"> *&#x2F;</span><br><span class="line">.org 0x1000</span><br><span class="line">pg0:</span><br><span class="line"></span><br><span class="line">.org 0x2000</span><br><span class="line">pg1:</span><br><span class="line"></span><br><span class="line">.org 0x3000</span><br><span class="line">pg2:</span><br><span class="line"></span><br><span class="line">.org 0x4000</span><br><span class="line">pg3:</span><br><span class="line"></span><br><span class="line">.org 0x5000</span><br><span class="line">&#x2F;*</span><br><span class="line"> * tmp_floppy_area is used by the floppy-driver when DMA cannot</span><br><span class="line"> * reach to a buffer-block. It needs to be aligned, so that it isn&#39;t</span><br><span class="line"> * on a 64kB border.</span><br><span class="line"> *&#x2F;</span><br><span class="line">tmp_floppy_area:</span><br><span class="line">	.fill 1024,1,0</span><br><span class="line"></span><br><span class="line">after_page_tables:</span><br><span class="line">	pushl $0		# These are the parameters to main :-)</span><br><span class="line">	pushl $0</span><br><span class="line">	pushl $0</span><br><span class="line">	pushl $L6		# return address for main, if it decides to.</span><br><span class="line">	pushl $main</span><br><span class="line">	jmp setup_paging</span><br><span class="line">L6:</span><br><span class="line">	jmp L6		# main should never return here, but</span><br><span class="line">				# just in case, we know what happens.</span><br><span class="line"></span><br><span class="line">&#x2F;* This is the default interrupt &quot;handler&quot; :-) *&#x2F;</span><br><span class="line">int_msg:</span><br><span class="line">	.asciz &quot;Unknown interrupt\n\r&quot;</span><br><span class="line">.align 2</span><br><span class="line">ignore_int:</span><br><span class="line">	pushl %eax</span><br><span class="line">	pushl %ecx</span><br><span class="line">	pushl %edx</span><br><span class="line">	push %ds</span><br><span class="line">	push %es</span><br><span class="line">	push %fs</span><br><span class="line">	movl $0x10,%eax</span><br><span class="line">	mov %ax,%ds</span><br><span class="line">	mov %ax,%es</span><br><span class="line">	mov %ax,%fs</span><br><span class="line">	pushl $int_msg</span><br><span class="line">	call printk</span><br><span class="line">	popl %eax</span><br><span class="line">	pop %fs</span><br><span class="line">	pop %es</span><br><span class="line">	pop %ds</span><br><span class="line">	popl %edx</span><br><span class="line">	popl %ecx</span><br><span class="line">	popl %eax</span><br><span class="line">	iret</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">&#x2F;*</span><br><span class="line"> * Setup_paging</span><br><span class="line"> *</span><br><span class="line"> * This routine sets up paging by setting the page bit</span><br><span class="line"> * in cr0. The page tables are set up, identity-mapping</span><br><span class="line"> * the first 16MB. The pager assumes that no illegal</span><br><span class="line"> * addresses are produced (ie &gt;4Mb on a 4Mb machine).</span><br><span class="line"> *</span><br><span class="line"> * NOTE! Although all physical memory should be identity</span><br><span class="line"> * mapped by this routine, only the kernel page functions</span><br><span class="line"> * use the &gt;1Mb addresses directly. All &quot;normal&quot; functions</span><br><span class="line"> * use just the lower 1Mb, or the local data space, which</span><br><span class="line"> * will be mapped to some other place - mm keeps track of</span><br><span class="line"> * that.</span><br><span class="line"> *</span><br><span class="line"> * For those with more memory than 16 Mb - tough luck. I&#39;ve</span><br><span class="line"> * not got it, why should you :-) The source is here. Change</span><br><span class="line"> * it. (Seriously - it shouldn&#39;t be too difficult. Mostly</span><br><span class="line"> * change some constants etc. I left it at 16Mb, as my machine</span><br><span class="line"> * even cannot be extended past that (ok, but it was cheap :-)</span><br><span class="line"> * I&#39;ve tried to show which constants to change by having</span><br><span class="line"> * some kind of marker at them (search for &quot;16Mb&quot;), but I</span><br><span class="line"> * won&#39;t guarantee that&#39;s all :-( )</span><br><span class="line"> *&#x2F;</span><br><span class="line">.align 2</span><br><span class="line">setup_paging:</span><br><span class="line">	movl $1024*5,%ecx		&#x2F;* 5 pages - pg_dir+4 page tables *&#x2F;</span><br><span class="line">	xorl %eax,%eax</span><br><span class="line">	xorl %edi,%edi			&#x2F;* pg_dir is at 0x000 *&#x2F;</span><br><span class="line">	cld;rep;stosl</span><br><span class="line">	movl $pg0+7,pg_dir		&#x2F;* set present bit&#x2F;user r&#x2F;w *&#x2F;</span><br><span class="line">	movl $pg1+7,pg_dir+4		&#x2F;*  --------- &quot; &quot; --------- *&#x2F;</span><br><span class="line">	movl $pg2+7,pg_dir+8		&#x2F;*  --------- &quot; &quot; --------- *&#x2F;</span><br><span class="line">	movl $pg3+7,pg_dir+12		&#x2F;*  --------- &quot; &quot; --------- *&#x2F;</span><br><span class="line">	movl $pg3+4092,%edi</span><br><span class="line">	movl $0xfff007,%eax		&#x2F;*  16Mb - 4096 + 7 (r&#x2F;w user,p) *&#x2F;</span><br><span class="line">	std</span><br><span class="line">1:	stosl			&#x2F;* fill pages backwards - more efficient :-) *&#x2F;</span><br><span class="line">	subl $0x1000,%eax</span><br><span class="line">	jge 1b</span><br><span class="line">	xorl %eax,%eax		&#x2F;* pg_dir is at 0x0000 *&#x2F;</span><br><span class="line">	movl %eax,%cr3		&#x2F;* cr3 - page directory start *&#x2F;</span><br><span class="line">	movl %cr0,%eax</span><br><span class="line">	orl $0x80000000,%eax</span><br><span class="line">	movl %eax,%cr0		&#x2F;* set paging (PG) bit *&#x2F;</span><br><span class="line"> </span><br><span class="line"></span><br><span class="line">.align 2</span><br><span class="line">.word 0</span><br><span class="line">idt_descr:</span><br><span class="line">	.word 256*8-1		# idt contains 256 entries</span><br><span class="line">	.long idt</span><br><span class="line">.align 2</span><br><span class="line">.word 0</span><br><span class="line">gdt_descr:</span><br><span class="line">	.word 256*8-1		# so does gdt (not that that&#39;s any</span><br><span class="line">	.long gdt		# magic number, but it works for me :^)</span><br><span class="line"></span><br><span class="line">	.align 8</span><br><span class="line">idt:	.fill 256,8,0		# idt is uninitialized</span><br><span class="line"></span><br><span class="line">gdt:	.quad 0x0000000000000000	&#x2F;* NULL descriptor *&#x2F;</span><br><span class="line">	.quad 0x00c09a0000000fff	&#x2F;* 16Mb *&#x2F;</span><br><span class="line">	.quad 0x00c0920000000fff	&#x2F;* 16Mb *&#x2F;</span><br><span class="line">	.quad 0x0000000000000000	&#x2F;* TEMPORARY - don&#39;t use *&#x2F;</span><br><span class="line">	.fill 252,8,0			&#x2F;* space for LDT&#39;s and TSS&#39;s etc *&#x2F;</span><br></pre></td></tr></table></figure>
+
+<p>Head是完成进入保护模式之后的初始化</p>
+<p><img src="image-20201130135551818.png" alt="image-20201130135551818"></p>
+<p>通过汇编实现对C（main函数）的调用。</p>
+<p><strong># Main函数？</strong></p>
+<p>对硬件逐个初始化。</p>
+<p>然后调用fork函数创建进程</p>
+<p><img src="image-20201130140317357.png" alt="image-20201130140317357"></p>
+
+        </div>
+
+        
+            <section class="post-copyright">
+                
+                    <p class="copyright-item">
+                        <span>Author:</span>
+                        <span>Dang Yanlin</span>
+                    </p>
+                
+                
+                
+                
+
+            </section>
+        
+	
+    <section id="comments" class="comments">
+      <style>
+        .comments{margin:30px;padding:10px;background:#fff}
+        @media screen and (max-width:800px){.comments{margin:auto;padding:10px;background:#fff}}
+      </style>
+      <div class="valine_comment"></div>
+<!--载入js，在</body>之前插入即可-->
+<!--Leancloud 操作库:-->
+<script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+<!--Valine 的核心代码库-->
+<script src="//unpkg.com/valine/dist/Valine.min.js"></script>
+<script>
+  new Valine({
+      el: '.valine_comment',
+      app_id: 'fdPvG8U2K2eUc1GnjTey5gwg-gzGzoHsz',
+      app_key: 'pSEhojKlFNh8eGAU3WfuDsDC',
+      placeholder: '这里留言。。',
+      notify: 'true',
+      verify: 'true',
+    });
+</script>
+    </section>
+
+        <section class="post-tags">
+            <div>
+                <span>Tag(s):</span>
+                <span class="tag">
+                    
+                </span>
+            </div>
+            <div>
+                <a href="javascript:window.history.back();">back</a>
+                <span>· </span>
+                <a href="/">home</a>
+            </div>
+        </section>
+        <section class="post-nav">
+            
+                <a class="prev" rel="prev" href="/2020/12/06/Hook%E6%8A%80%E6%9C%AF%E5%AE%9E%E6%88%98/">Hook技术实战</a>
+            
+            
+            <a class="next" rel="next" href="/2020/11/27/Linux%E8%BF%9B%E7%A8%8B%E5%9C%B0%E5%9D%80%E7%A9%BA%E9%97%B4/">Linux下ELF文件与Linux进程内存布局</a>
+            
+        </section>
+
+    </article>
+</div>
+
+        </div>
+        <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js">
+</script>
+<footer id="footer" class="footer">
+    <div class="copyright">
+        <span>© 2020 | Powered by Dang Yanlin </span>
+已经建站 <b id='build_time'></b>
+		<span id="busuanzi_container_site_pv" style="display: none;">本站总访问量<span id="busuanzi_value_site_pv"></span>次</span>  <span id="busuanzi_container_site_uv" style="display: none;">本站访客数<span id="busuanzi_value_site_uv"</span>人</span>
+    </div>
+</footer>
+<script src="https://cdn.jsdelivr.net/gh/ITJoker233/ITJoker233.github.io/CDN/js/time.min.js"></script>
+        <script>setInterval(show_date_time, 1000, '2020-04-10');</script>
+<script>setInterval(show_date_time, 1000, '2020-04-10');</script>
+    </div>
+</body>
+</html>
