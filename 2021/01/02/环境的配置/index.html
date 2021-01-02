@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+    <meta name="author" content="Dang Yanlin">
+
+
+    <meta name="subtitle" content="linlin">
+
+
+    <meta name="description" content="逆向 re 网络安全 二进制">
+
+
+
+<title>环境的配置 | WalkerRev&#39;s blog</title>
+
+
+
+    <link rel="icon" href="/favicon.ico">
+
+
+
+
+    <!-- stylesheets list from _config.yml -->
+    
+    <link rel="stylesheet" href="/css/style.css">
+    
+
+
+
+    <!-- scripts list from _config.yml -->
+    
+    <script src="/js/script.js"></script>
+    
+    <script src="/js/tocbot.min.js"></script>
+    
+
+
+
+    
+    
+        
+    
+
+
+<meta name="generator" content="Hexo 4.2.0"></head>
+<body>
+    <div class="wrapper">
+        <header>
+    <nav class="navbar">
+        <div class="container">
+            <div class="navbar-header header-logo"><a href="/">Linlin&#39;s Blog</a></div>
+            <div class="menu navbar-right">
+                
+                    <a class="menu-item" href="/archives">博客</a>
+                
+                    <a class="menu-item" href="/category">目录</a>
+                
+                    <a class="menu-item" href="/tag">标签</a>
+                
+                    <a class="menu-item" href="https://me.csdn.net/qq_42689353" target="_blank" rel="noopener">CSDN</a>
+                
+                <input id="switch_default" type="checkbox" class="switch_default">
+                <label for="switch_default" class="toggleBtn"></label>
+            </div>
+        </div>
+    </nav>
+
+    
+    <nav class="navbar-mobile" id="nav-mobile">
+        <div class="container">
+            <div class="navbar-header">
+                <div>
+                    <a href="/">Linlin&#39;s Blog</a><a id="mobile-toggle-theme">·&nbsp;Light</a>
+                </div>
+                <div class="menu-toggle" onclick="mobileBtn()">&#9776; Menu</div>
+            </div>
+            <div class="menu" id="mobile-menu">
+                
+                    <a class="menu-item" href="/archives">博客</a>
+                
+                    <a class="menu-item" href="/category">目录</a>
+                
+                    <a class="menu-item" href="/tag">标签</a>
+                
+                    <a class="menu-item" href="https://me.csdn.net/qq_42689353" target="_blank" rel="noopener">CSDN</a>
+                
+            </div>
+        </div>
+    </nav>
+
+</header>
+<script>
+    var mobileBtn = function f() {
+        var toggleMenu = document.getElementsByClassName("menu-toggle")[0];
+        var mobileMenu = document.getElementById("mobile-menu");
+        if(toggleMenu.classList.contains("active")){
+           toggleMenu.classList.remove("active")
+            mobileMenu.classList.remove("active")
+        }else{
+            toggleMenu.classList.add("active")
+            mobileMenu.classList.add("active")
+        }
+    }
+</script>
+        <div class="main">
+            <div class="container">
+    
+    
+        <div class="post-toc">
+    <div class="tocbot-list">
+    </div>
+    <div class="tocbot-list-menu">
+        <a class="tocbot-toc-expand" onclick="expand_toc()">Expand all</a>
+        <a onclick="go_top()">Back to top</a>
+        <a onclick="go_bottom()">Go to bottom</a>
+    </div>
+</div>
+
+<script>
+    document.ready(
+        function () {
+            tocbot.init({
+                tocSelector: '.tocbot-list',
+                contentSelector: '.post-content',
+                headingSelector: 'h1, h2, h3, h4, h5',
+                collapseDepth: 1,
+                orderedList: false,
+                scrollSmooth: true,
+            })
+        }
+    )
+
+    function expand_toc() {
+        var b = document.querySelector(".tocbot-toc-expand");
+        tocbot.init({
+            tocSelector: '.tocbot-list',
+            contentSelector: '.post-content',
+            headingSelector: 'h1, h2, h3, h4, h5',
+            collapseDepth: 6,
+            orderedList: false,
+            scrollSmooth: true,
+        });
+        b.setAttribute("onclick", "collapse_toc()");
+        b.innerHTML = "Collapse all"
+    }
+
+    function collapse_toc() {
+        var b = document.querySelector(".tocbot-toc-expand");
+        tocbot.init({
+            tocSelector: '.tocbot-list',
+            contentSelector: '.post-content',
+            headingSelector: 'h1, h2, h3, h4, h5',
+            collapseDepth: 1,
+            orderedList: false,
+            scrollSmooth: true,
+        });
+        b.setAttribute("onclick", "expand_toc()");
+        b.innerHTML = "Expand all"
+    }
+
+    function go_top() {
+        window.scrollTo(0, 0);
+    }
+
+    function go_bottom() {
+        window.scrollTo(0, document.body.scrollHeight);
+    }
+
+</script>
+    
+
+    
+    <article class="post-wrap">
+        <header class="post-header">
+            <h1 class="post-title">环境的配置</h1>
+            
+                <div class="post-meta">
+                    
+                        Author: <a itemprop="author" rel="author" href="/">Dang Yanlin</a>
+                    
+
+                    
+                        <span class="post-time">
+                        Date: <a href="#">January 2, 2021&nbsp;&nbsp;12:59:59</a>
+                        </span>
+                    
+                    
+	<div style="margin-top:10px;">
+    <span class="post-time">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-keyboard-o"></i>
+        <span class="post-meta-item-text">  字数统计: </span>
+        <span class="post-count">663字</span>
+      </span>
+    </span>
+
+    <span class="post-time">
+      &nbsp; | &nbsp;
+      <span class="post-meta-item-icon">
+        <i class="fa fa-hourglass-half"></i>
+        <span class="post-meta-item-text">  阅读时长: </span>
+        <span class="post-count">3分</span>
+      </span>
+    </span>
+</div>
+           
+                </div>
+            
+        </header>
+
+        <div class="post-content">
+            <h1 id="环境的配置"><a href="#环境的配置" class="headerlink" title="环境的配置"></a>环境的配置</h1><h1 id="版本："><a href="#版本：" class="headerlink" title="版本："></a>版本：</h1><p>Ubuntu 20.04<br>bochs 2-6-2</p>
+<h2 id="安装步骤："><a href="#安装步骤：" class="headerlink" title="安装步骤："></a>安装步骤：</h2><h3 id="bochs："><a href="#bochs：" class="headerlink" title="bochs："></a>bochs：</h3><h4 id="configure："><a href="#configure：" class="headerlink" title="configure："></a>configure：</h4><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">./configure \</span><br><span class="line">--prefix=//home/walkerrevll/操作系统真相还原/bochs/bochs \     //指定bochs 的安装目录。</span><br><span class="line">--enable-debugger\									//  指定bochs 自己的调试器。</span><br><span class="line">--enable-disasm \										//  指定bochs 支持反汇编。</span><br><span class="line">--enable-iodebug \									//  指定启用io接口调试器。</span><br><span class="line">--enable-x86-debugger \							//  支持x86调试器。</span><br><span class="line">--with-x \													//  使用x windows。</span><br><span class="line">--with-x11 \													//  使用x11 图形用户接口。</span><br><span class="line">LIBS='-lX11'</span><br><span class="line">LDFLAGS='-pthread'</span><br></pre></td></tr></table></figure>
+<p>生成MakeFile文件</p>
+<h4 id="make："><a href="#make：" class="headerlink" title="make："></a>make：</h4><p>make 之后发现报错：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">x.cc:37:10: fatal error: X11/Xlib.h: 没有那个文件或目录</span><br></pre></td></tr></table></figure>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo apt-cache search x11-dev</span><br></pre></td></tr></table></figure>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">libx11-dev - X11 client-side library (development headers)</span><br><span class="line">libxkbcommon-x11-dev - library to create keymaps with the XKB X11 protocol - development files</span><br><span class="line">libghc-gi-gdkx11-dev - GDKX11 bindings</span><br><span class="line">libghc-x11-dev - Haskell X11 binding for GHC</span><br><span class="line">libnx-x11-dev - nxagent's libNX_X11 client-part library (development headers)</span><br><span class="line">librust-cairo-sys-rs+x11-dev - FFI bindings to libcairo - feature "x11"</span><br><span class="line">librust-x11-dev - X11 library bindings for Rust - Rust source code</span><br></pre></td></tr></table></figure>
+<p>发现需要下载如上所示的组件，分别下载</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">sudo apt-get install librust-x11-dev</span><br><span class="line">sudo apt-get install librust-cairo-sys-rs+x11-dev</span><br><span class="line">sudo apt-get install libnx-x11-dev</span><br><span class="line">sudo apt-get install libghc-x11-dev</span><br><span class="line">sudo apt-get install libghc-gi-gdkx11-dev</span><br><span class="line">sudo apt-get install libxkbcommon-x11-dev</span><br><span class="line">sudo apt-get install libx11-dev</span><br></pre></td></tr></table></figure>
+<p>参考链接：<a href="https://blog.csdn.net/qq_37232329/article/details/109406809" target="_blank" rel="noopener">https://blog.csdn.net/qq_37232329/article/details/109406809</a></p>
+<h4 id="make-install"><a href="#make-install" class="headerlink" title="make install:"></a>make install:</h4><h3 id="bochs的配置："><a href="#bochs的配置：" class="headerlink" title="bochs的配置："></a>bochs的配置：</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> 第一步，首先设置Bochs 在运行过程中能够使用的内存，本例为32MB。</span></span><br><span class="line"><span class="meta">#</span><span class="bash"> 关键字为：megs</span></span><br><span class="line">megs:32</span><br><span class="line"></span><br><span class="line"><span class="meta">#</span><span class="bash"> 第二步，设置对应真实机器的BIOS 和VGA BIOS。</span></span><br><span class="line"><span class="meta">#</span><span class="bash"> 对应两个关键字为：romimage 和 vgaromimage</span></span><br><span class="line"></span><br><span class="line">romimage:file=/home/walkerrevll/操作系统真相还原/bochs/bochs/share/bochs/BIOS-bochs-latest</span><br><span class="line">vgaromimage:file=/home/walkerrevll/操作系统真相还原/bochs/bochs/share/bochs/VGABIOS-lgpl-latest</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="meta">#</span><span class="bash"> 第三步，设置Bochs 所使用的磁盘，软盘的关键字为floppy。</span></span><br><span class="line"><span class="meta">#</span><span class="bash"> 若只有一个软盘，则使用floppya 即可，若有多个，则为floppya，floppyb…</span></span><br><span class="line"><span class="meta">#</span><span class="bash">floppya:1_44=a.img, status=inserted</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#</span><span class="bash"> 第四步，选择启动盘符。</span></span><br><span class="line"><span class="meta">#</span><span class="bash">boot: floppy <span class="comment">#默认从软盘启动，将其注释</span></span></span><br><span class="line">boot:disk #改为从硬盘启动。我们的任何代码都将直接写在硬盘上，所以不会再有读写软盘的操作。</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="meta">#</span><span class="bash"> 第五步，设置日志文件的输出。</span></span><br><span class="line"></span><br><span class="line">log:bochs.out</span><br><span class="line"></span><br><span class="line"><span class="meta">#</span><span class="bash"> 第六步，开启或关闭某些功能。</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="meta">#</span><span class="bash"> 下面是关闭鼠标，并打开键盘。</span></span><br><span class="line"></span><br><span class="line">mouse: enabled=0</span><br><span class="line"></span><br><span class="line">keyboard: type=mf, serial_delay=250</span><br><span class="line"></span><br><span class="line">keyboard: keymap=/home/walkerrevll/操作系统真相还原/bochs/bochs/share/bochs/keymaps/x11-pc-us.map</span><br><span class="line"></span><br><span class="line"><span class="meta">#</span><span class="bash"> 硬盘设置</span></span><br><span class="line">ata0: enabled=1, ioaddr1=0x1f0, ioaddr2=0x3f0, irq=14</span><br><span class="line">ata0-master: type=disk, path="hd60M.img", mode=flat, cylinders=121, heads=16, spt=63</span><br></pre></td></tr></table></figure>
+
+
+
+        </div>
+
+        
+            <section class="post-copyright">
+                
+                    <p class="copyright-item">
+                        <span>Author:</span>
+                        <span>Dang Yanlin</span>
+                    </p>
+                
+                
+                
+                
+
+            </section>
+        
+	
+    <section id="comments" class="comments">
+      <style>
+        .comments{margin:30px;padding:10px;background:#fff}
+        @media screen and (max-width:800px){.comments{margin:auto;padding:10px;background:#fff}}
+      </style>
+      <div class="valine_comment"></div>
+<!--载入js，在</body>之前插入即可-->
+<!--Leancloud 操作库:-->
+<script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+<!--Valine 的核心代码库-->
+<script src="//unpkg.com/valine/dist/Valine.min.js"></script>
+<script>
+  new Valine({
+      el: '.valine_comment',
+      app_id: 'fdPvG8U2K2eUc1GnjTey5gwg-gzGzoHsz',
+      app_key: 'pSEhojKlFNh8eGAU3WfuDsDC',
+      placeholder: '这里留言。。',
+      notify: 'true',
+      verify: 'true',
+    });
+</script>
+    </section>
+
+        <section class="post-tags">
+            <div>
+                <span>Tag(s):</span>
+                <span class="tag">
+                    
+                </span>
+            </div>
+            <div>
+                <a href="javascript:window.history.back();">back</a>
+                <span>· </span>
+                <a href="/">home</a>
+            </div>
+        </section>
+        <section class="post-nav">
+            
+            
+            <a class="next" rel="next" href="/2020/12/06/%E8%AE%A1%E7%AE%97%E6%9C%BA%E6%98%AF%E5%A6%82%E4%BD%95%E5%90%AF%E5%8A%A8%E7%9A%84/">计算机是如何启动的</a>
+            
+        </section>
+
+    </article>
+</div>
+
+        </div>
+        <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js">
+</script>
+<footer id="footer" class="footer">
+    <div class="copyright">
+        <span>© 2020 | Powered by Dang Yanlin </span>
+已经建站 <b id='build_time'></b>
+		<span id="busuanzi_container_site_pv" style="display: none;">本站总访问量<span id="busuanzi_value_site_pv"></span>次</span>  <span id="busuanzi_container_site_uv" style="display: none;">本站访客数<span id="busuanzi_value_site_uv"</span>人</span>
+    </div>
+</footer>
+<script src="https://cdn.jsdelivr.net/gh/ITJoker233/ITJoker233.github.io/CDN/js/time.min.js"></script>
+        <script>setInterval(show_date_time, 1000, '2020-04-10');</script>
+<script>setInterval(show_date_time, 1000, '2020-04-10');</script>
+    </div>
+</body>
+</html>
